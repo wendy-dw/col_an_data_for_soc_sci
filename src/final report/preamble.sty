@@ -1,0 +1,16 @@
+\usepackage{fontspec}
+\usepackage{float}
+\setmainfont{Times New Roman}
+\renewcommand{\baselinestretch}{1.2}
+\usepackage[a4paper, width=160mm, top=20mm, bottom=20mm]{geometry}
+\pagestyle{plain}
+
+\usepackage{color}
+\usepackage{framed}
+\setlength{\fboxsep}{.8em}
+
+\newenvironment{greybox}{
+  \definecolor{shadecolor}{rgb}{0.9,0.9,0.9}  % light grey
+  \color{black}
+  \begin{shaded}}
+ {\end{shaded}}

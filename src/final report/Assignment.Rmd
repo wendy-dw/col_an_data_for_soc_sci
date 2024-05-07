@@ -1,0 +1,46 @@
+---
+documentclass: article
+fontsize: 10pt
+date: "`r Sys.Date()`"
+output: 
+  bookdown::pdf_document2: 
+    fig_caption: yes
+    toc: false
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+      before_body: titlepage.sty
+bibliography: references.bib  
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE, appendix=TRUE}
+#---------------------------load all packages----------------------------------#
+library(tidyverse)
+library(rprojroot)
+library(kableExtra)
+
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(
+  root.dir = find_root(criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
+
+# Introduction
+
+# Methodology
+
+# Results
+
+# Discussion
+
+\clearpage
+
+\appendix
+
+# Appendix
+
+
+# Bibliography
