@@ -30,7 +30,34 @@ knitr::opts_knit$set(
 
 # Introduction
 
+The Israeli-Palestinian conflict has its origins in the late 19$^{th}$ and early 20$^{th}$ century when Jewish settlers arrived to Ottoman Palestine. In 1947, after the second world war, the United Nations (UN) partition plan officially split Palestine into and Arab state, Jewish state, and Jerusalem. Important aspects of conflict are the Israeli occupation of the West Bank and Gaza strip, Israeli settlements (see also Figure \@ref(fig:territory)), the division of Jerusalem, borders, security and water rights. Over the years, the conflict has escalated to actual wars several times. The UN partition plan led to a lot of violence and, in 1948, the Arab-Israeli war. The six-day war in 1967 and the Yom-Kippur war in 1973 were followed by the first (1987-1993) and second (2000-2005) Intifada. Currently, the conflict is back in the news with an ongoing war between Israel and Hamas. Both parties have their supporters and this research aims to investigate whether a sentiment analysis of wikipedia pages on the conflict in different languages can unveil underlying positive or negative feelings towards the conflict, Israel and Palestine.
+
+```{r territory, echo=FALSE, fig.cap= "Division of Palestinian and Israeli territory over the years (source: https://yalibnan.com/2014/06/27/eu-warns-business-israeli-settlements/)", out.width = "10cm"}
+knitr::include_graphics(
+  find_root_file("data", "fig", "vanishing-palestine.jpg",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
+
+Wikipedia pages are chosen to perform a sentiment analysis. Wikipedia pages are typically written by a community of interested and motivated volunteers. Pages on the most popular/important topics typically exist in many different languages and the content may differ quite substantially, depending on the language. They are typically not a litteral translation from one language to the other but are typically written by speakers of the language with some knwoledge on the topic at hand. We will focus on the languages spoken by Israeli (Hebrew and Yiddish), the Palestinians (Arab), some "Western" languages (English, Dutch, French, German, Italian, Spanish) and some Eastern languages (Chinese, Russian, Persian).
+
+## Literature review
+
+The Israeli-Palestinian conflict has been analysed using sentiment analysis before. In this section, we refer to some inspiring examples. 
+
+The documents on which the sentiment analysis is applied differs over different research articles.  Twitter has likely been the most popular choice [@al2019multi; @imtiaz2022taking; @matalon2021using; @ramdhani2023sentiment; @abusheikh2023digital] but web scraping from Twitter's successor, X, has become very hard so we looked for alternatives.
+@al2018bias identify patterns in the press orientation and further in the media bias towards either the Palestinian or Israeli side from press reports and articles.
+Similarly, @alsubari2024online base their research on news channel streams to assess channel and user engagement. 
+
+Other examples where opninions are compared in different languages are @abusheikh2023digital and @al2012automatic. The latter is of particular interest since they also base their research on wikipedia pages. 
+
 # Methodology
+
+
+We plan to follow the following steps:
+
+1. Web scraping and web crawling: The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code is called **Scraping**. We plan to use he R package [\underline{rvest}](https://cran.r-project.org/web/packages/rvest/index.html) for this tesk, inspired by two tutorials in particular [\underline{here}](https://ghanadatastuff.com/post/webscraping_wikipedia/) and [\underline{here}](https://github.com/tm4ss/tm4ss.github.io/blob/master/Tutorial_1_Web_scraping.Rmd). 
+2. Sentiment analysis: Since we want to compare the sentiment of wikipedia pages in different languages, we need a tool that is able to perform sentiment analysis in different languages. The [\underline{Syuzhet}](https://cran.r-project.org/web/packages/syuzhet/vignettes/syuzhet-vignette.html) package currently supports many languages, among which there are Arab, Chinese, Dutch, English, French, German, Hebrew, Italian, Persian, Russian, Spanish, and Yiddish.
+3. A statistical analysis: It is yet unclear which statistical analysis will fit best to answer our main research questions pertaining to the difference in sentiment/opinion on the Israeli-Palestinian conflict, depending on the language of the documents. Finding clusters of languages with similar sentiments seems like a sensible route for now.
 
 # Results
 
