@@ -1,0 +1,62 @@
+..generic:
+  git2rdata: 0.4.0
+  optimize: yes
+  NA string: NA
+  hash: dc5df9cb6d736f340dfb0e87a1534551544ee43d
+  data_hash: 77a8df0cc7c13114566df8108359117f5f5b44e6
+link:
+  class: character
+language:
+  class: factor
+  labels:
+  - Arabic
+  - Chinese
+  - Dutch
+  - English
+  - French
+  - German
+  - Hebrew
+  - Italian
+  - Persian
+  - Russian
+  - Spanish
+  index:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  ordered: no
+language_short:
+  class: factor
+  labels:
+  - Ara
+  - Chi
+  - Dut
+  - Eng
+  - Fre
+  - Ger
+  - Heb
+  - Ita
+  - Per
+  - Rus
+  - Spa
+  index:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  ordered: no
