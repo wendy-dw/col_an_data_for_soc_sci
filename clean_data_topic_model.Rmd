@@ -1,0 +1,122 @@
+---
+title: "processing data"
+output: html_notebook
+---
+
+```{r package}
+#install.packages("stringr")
+#install.packages("tokenizers")
+#install.packages("arrow")
+#install.packages("tm")
+#install.packages("textstem")
+#install.packages("wordcloud")
+#install.packages("topicmodels")
+
+library(stringr)
+library(wordcloud)
+library(tokenizers)
+library(arrow)
+library(tm)
+library(textstem)
+library(topicmodels)
+library(dplyr)
+
+```
+
+```{r}
+# sample text as an example
+text <- '\nMore than 700,000 Palestinians displaced in 1948[2] with a further 413,000 Palestinians displaced in the Six-Day War.[3]\n6,373 Israeli[4] and 3,000–13,000 Palestinian deaths in the 1948 Arab–Israeli War.[5]\n654 Israeli[6] and 1,000–2,400 PLO deaths in the 1982 Lebanon War.\n1,962 Palestinians[7] and 179–200 Israeli deaths[8] in the First Intifada.\n1,010 Israelis[9] and up to 3,354 Palestinian deaths in the Second Intifada.[9]\n402 Palestinians were killed in the 2006 Gaza–Israel conflict.[10]\n1,116[11]–1,417[12] Palestinian deaths in the Gaza War (2008–2009).\n2,125–2,310 Palestinian deaths in the 2014 Gaza War.[13]\n250+ Palestinian deaths in the 2021 Israel–Palestine crisis.[14]\nThe Israeli–Palestinian conflict is an ongoing military and political conflict about land and self-determination within the territory of the former Mandatory Palestine.[18][19][20] Key aspects of the conflict include the Israeli occupation of the West Bank and Gaza Strip, the status of Jerusalem, Israeli settlements, borders, security, water rights,[21] the permit regime, Palestinian freedom of movement,[22]'
+
+# remove newline characters
+clean_text <- str_replace_all(text, "\n", " ")
+
+# remove references like [2], [3], etc.
+clean_text <- str_replace_all(clean_text, "\\[[0-9]+\\]", "")
+
+# Remove extraneous punctuation and quotes
+clean_text <- str_replace_all(clean_text, "[\"']", "")
+
+# remove extra spaces
+clean_text <- str_squish(clean_text)
+
+# tokenize into sentences
+library(tokenizers)
+sentences <- unlist(tokenize_sentences(clean_text))
+
+print(sentences)
+
+```
+```{r read_data}
+parquet_file <- "data/content.parquet"
+df <- read_parquet(parquet_file)
+
+# filter only english for now
+df <- filter(df, language == "English")
+
+print(df)
+```
+
+```{r process_data}
+# clean the page_content column
+df$page_content <- str_replace_all(df$page_content, "\n", " ")
+df$page_content <- str_replace_all(df$page_content, "\\[[0-9]+\\]", "")
+df$page_content <- str_replace_all(df$page_content, "[\"']", "")
+df$page_content <- str_squish(df$page_content)
+
+# tokenize the cleaned content into sentences
+df$page_content <- sapply(df$page_content, function(content) {
+  sentences <- unlist(tokenize_sentences(content))
+  return(sentences)
+})
+
+# check
+texts <- df$page_content[1]
+print(texts)
+```
+
+
+```{r document_term_matrix_sample}
+
+corpus <- Corpus(VectorSource(texts))
+
+# preprocess the text
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus, stripWhitespace)
+
+dtm <- DocumentTermMatrix(corpus)
+
+inspect(dtm)
+```
+
+```{r create_topics}
+
+corpus <- Corpus(VectorSource(df$page_content))
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("en"))
+corpus <- tm_map(corpus, stripWhitespace)
+
+topic_models <- list()
+
+for (i in 1:length(corpus)) {
+  dtm <- DocumentTermMatrix(corpus[i])
+  
+  # fit LDA model 
+  lda_model <- LDA(dtm, k = 2)  # Specify the number of topics (k)
+  
+  topic_models[[i]] <- lda_model
+}
+
+# print the topics for each document
+for (i in 1:length(topic_models)) {
+  cat("Topics for document", i, ":\n")
+  print(terms(topic_models[[i]], 5)) # Print top 5 terms for each topic
+  cat("\n")
+}
+
+```
+
