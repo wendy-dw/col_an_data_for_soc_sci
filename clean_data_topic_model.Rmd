@@ -11,7 +11,13 @@ output: html_notebook
 #install.packages("textstem")
 #install.packages("wordcloud")
 #install.packages("topicmodels")
+#install.packages("quanteda")
 
+install.packages("tidyverse")
+
+library(tidyverse)
+
+library(quanteda)
 library(stringr)
 library(wordcloud)
 library(tokenizers)
@@ -74,6 +80,7 @@ texts <- df$page_content[1]
 print(texts)
 ```
 
+create document term matrix 
 
 ```{r document_term_matrix_sample}
 
@@ -85,13 +92,12 @@ corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, removeWords, stopwords("english"))
 corpus <- tm_map(corpus, stripWhitespace)
-
 dtm <- DocumentTermMatrix(corpus)
 
 inspect(dtm)
-```
 
-```{r create_topics}
+# process for all texts
+
 
 corpus <- Corpus(VectorSource(df$page_content))
 corpus <- tm_map(corpus, content_transformer(tolower))
@@ -99,6 +105,59 @@ corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, removeWords, stopwords("en"))
 corpus <- tm_map(corpus, stripWhitespace)
+
+dtm <- DocumentTermMatrix(corpus)
+
+inspect(dtm)
+```
+```{r analysis}
+freq <- colSums(as.matrix(dtm))
+#length(freq)
+
+# creating sorted order according to the freq
+ord <- order(freq, decreasing = TRUE)
+# inspecting most frequently occurring terms
+freq[head(ord)]
+
+# inspecting less frequently occurring terms
+freq[tail(ord)]
+
+# removing less frequently occurring words
+dtmr <- DocumentTermMatrix(corpus,
+                           control = list(wordLengths = c(2, 20),
+                                          bounds = list(global = c (3, Inf))
+                                          )
+                           )
+inspect(dtmr)
+
+# frequency after removal
+freqr <- colSums(as.matrix(dtmr))
+# length after removal
+length(freqr)
+
+```
+
+```{r visualization_hist}
+# histogram
+wf = data.frame(term = names(freqr), occurrences = freqr)
+library(ggplot2)
+histo <- ggplot(subset(wf, freqr > 5), aes(term, occurrences)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+print(histo)
+
+```
+
+```{r visualization_wordcloud}
+# word cloud
+library(wordcloud)
+wordcloud(names(freqr), freqr, min.freq = 5, colors = brewer.pal(4, "Dark2"))
+
+# reference: https://rpubs.com/vipero7/introduction-to-text-mining-with-r
+```
+
+
+```{r create_topics}
 
 topic_models <- list()
 
