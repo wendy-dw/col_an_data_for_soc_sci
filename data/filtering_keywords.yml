@@ -1,0 +1,28 @@
+..generic:
+  git2rdata: 0.4.0
+  optimize: yes
+  NA string: NA
+  hash: bcea828e6a181aa2c577d16912a6c7238b19b9d4
+  data_hash: 48ef442b9f184a542830dbbbe252406e0ee27b9c
+English:
+  class: character
+Dutch:
+  class: character
+French:
+  class: character
+German:
+  class: character
+Italian:
+  class: character
+Spanish:
+  class: character
+Chinese:
+  class: character
+Russian:
+  class: character
+Arabic:
+  class: character
+Hebrew:
+  class: character
+Persian:
+  class: character

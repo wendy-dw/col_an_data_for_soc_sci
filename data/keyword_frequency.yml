@@ -1,0 +1,61 @@
+..generic:
+  git2rdata: 0.4.0
+  optimize: yes
+  NA string: NA
+  hash: 2d4e434a38a59535ef03afc15a2fb36742af8af0
+  data_hash: e85be2643e16be3188505002817c5e73cf7e2b07
+nchar:
+  class: integer
+israel:
+  class: integer
+israeli:
+  class: integer
+palestine:
+  class: integer
+palestinian:
+  class: integer
+arab:
+  class: integer
+gaza:
+  class: integer
+intifada:
+  class: integer
+jewish:
+  class: integer
+zionism:
+  class: integer
+hamas:
+  class: integer
+language:
+  class: factor
+  labels:
+  - Arabic
+  - Chinese
+  - Dutch
+  - English
+  - French
+  - German
+  - Hebrew
+  - Italian
+  - Persian
+  - Russian
+  - Spanish
+  index:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  ordered: no
+total:
+  class: integer
+totalperchar:
+  class: numeric
+link:
+  class: character
