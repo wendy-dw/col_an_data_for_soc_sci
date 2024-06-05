@@ -14,6 +14,7 @@ bibliography: references.bib
 editor_options: 
   markdown: 
     wrap: 72
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE, message=FALSE, warning=FALSE, appendix=TRUE}
@@ -31,6 +32,9 @@ library(webdriver)
 library(rvest)
 library(furrr)           #webscrape in parallel
 
+#packages for languages
+library(deeplr)          #for easy translations from R
+
 
 #load custom functions
 source(find_root_file("src", "final report", "helperfunctions.R",
@@ -46,16 +50,12 @@ options(stringsAsFactors = F)
 
 # Introduction
 
-The Israeli-Palestinian conflict has its origins in the late 19$^{th}$ and early 20$^{th}$ century when Jewish settlers arrived to Ottoman Palestine. In 1947, after the second world war, the United Nations (UN) partition plan officially split Palestine into and Arab state, Jewish state, and Jerusalem. Important aspects of conflict are the Israeli occupation of the West Bank and Gaza strip, Israeli settlements (see also Figure \@ref(fig:territory)), the division of Jerusalem, borders, security and water rights. Over the years, the conflict has escalated to actual wars several times. The UN partition plan led to a lot of violence and, in 1948, the Arab-Israeli war. The six-day war in 1967 and the Yom-Kippur war in 1973 were followed by the first (1987-1993) and second (2000-2005) Intifada. Currently, the conflict is back in the news with an ongoing war between Israel and Hamas. Both parties have their supporters and this research aims to investigate whether a sentiment analysis of Wikipedia pages on the conflict in different languages can unveil underlying positive or negative feelings towards the conflict, Israel and Palestine.
+The Israeli-Palestinian conflict has its origins in the late 19$^{th}$ and early 20$^{th}$ century when Jewish settlers arrived to Ottoman Palestine. In 1947, after the second world war, the United Nations (UN) partition plan officially split Palestine into and Arab state, Jewish state, and Jerusalem. Important aspects of conflict are the Israeli occupation of the West Bank and Gaza strip, Israeli settlements (see also the Figure below), the division of Jerusalem, borders, security and water rights. Over the years, the conflict has escalated to actual wars several times. The UN partition plan led to a lot of violence and, in 1948, the Arab-Israeli war. The six-day war in 1967 and the Yom-Kippur war in 1973 were followed by the first (1987-1993) and second (2000-2005) Intifada. Currently, the conflict is back in the news with an ongoing war between Israel and Hamas. Both parties have their supporters and this research aims to investigate whether a sentiment analysis of Wikipedia pages on the conflict in different languages can unveil underlying positive or negative feelings towards the conflict, Israel and Palestine.
 
 Wikipedia pages are typically written by a community of interested and motivated volunteers. Pages on the most popular/important topics typically exist in many different languages and the content may differ quite substantially, depending on the language. They are typically not a literal translation from one language to the other but are typically written by speakers of the language with some knowledge on the topic at hand. We will focus on the languages spoken by Israeli (Hebrew), the Palestinians (Arabic), some "Western" languages (English, Dutch, French, German, Italian, Spanish) and some Eastern languages (Chinese, Russian, Persian).
 
 
-```{r territory, echo=FALSE, fig.cap= "Division of Palestinian and Israeli territory over the years (source: https://yalibnan.com/2014/06/27/eu-warns-business-israeli-settlements/)", out.width = "10cm", eval = FALSE}
-knitr::include_graphics(
-  find_root_file("data", "fig", "vanishing-palestine.jpg",
-                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
-```
+! [Division of Palestinian and Israeli territory over the years (source: https://yalibnan.com/2014/06/27/eu-warns-business-israeli-settlements/)](vanishing-palestine.jpg)
 
 
 ## Literature review
@@ -73,7 +73,7 @@ Other examples where opinions are compared in different languages are @abusheikh
 
 We plan to follow the following steps:
 
-1. Web scraping and web crawling: The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code is called **Scraping**. We plan to use he R package [\underline{rvest}](https://cran.r-project.org/web/packages/rvest/index.html) for this tesk, inspired by two tutorials in particular [\underline{here}](https://ghanadatastuff.com/post/webscraping_wikipedia/) and [\underline{here}](https://github.com/tm4ss/tm4ss.github.io/blob/master/Tutorial_1_Web_scraping.Rmd). 
+1. Web scraping and web crawling: The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code is called **Scraping**. We plan to use he R package [\underline{rvest}](https://cran.r-project.org/web/packages/rvest/index.html) for this task, inspired by two tutorials in particular [\underline{here}](https://ghanadatastuff.com/post/webscraping_wikipedia/) and [\underline{here}](https://github.com/tm4ss/tm4ss.github.io/blob/master/Tutorial_1_Web_scraping.Rmd). 
 2. Sentiment analysis: Since we want to compare the sentiment of wikipedia pages in different languages, we need a tool that is able to perform sentiment analysis in different languages. The [\underline{Syuzhet}](https://cran.r-project.org/web/packages/syuzhet/vignettes/syuzhet-vignette.html) package currently supports many languages, among which there are Arabic, Chinese, Dutch, English, French, German, Hebrew, Italian, Persian, Russian, and Spanish.
 3. A statistical analysis: It is yet unclear which statistical analysis will fit best to answer our main research questions pertaining to the difference in sentiment/opinion on the Israeli-Palestinian conflict, depending on the language of the documents. Finding clusters of languages with similar sentiments seems like a sensible route for now.
 
@@ -140,7 +140,7 @@ links <- read_vc(
 
 In total, this search yields `r nrow(links)` URLs for all 11 languages. Figure \@ref(fig:nb-urls) shows the number of linked Wikipedia pages for each of the languages on the left. For comparison, we show the number of (native) speaker on the right since the number of Wikipedia pages will depend a lot on the number of speakers who can write the pages. Taking both into account, we can see that Arabic and English have the most Wikipedia pages linked to the "Israeli-Palestinian conflict" page. Arabic and Hebrew, logically, have much more Wikipedia pages on the issue than what would be expected, given their lower number of native speakers.   
 
-```{r nb-urls, fig.cap = "Number of URLs per language on the left and the number of (native) speakers on the right."}
+```{r nb-urls, fig.cap = "Number of URLs per language on the left and the number of (native) speakers on the right.", warning = FALSE, message = FALSE}
 p1 <- links %>%
   ggplot(aes(y = reorder(language, language,
                      function(x)-length(x)))) +
@@ -215,6 +215,274 @@ content <- read_parquet(
   mutate(language = as.factor(language),
          language_short = as.factor(language_short))
 ``` 
+
+## Filtering relevant web pages
+
+Looking at the scraped pages, it is clear that some web pages are not relevant for the Israeli-Palestinian conflict.
+This was to be expected since Wikipedia has the tendency to link to *all* topics for which a Wikipedia page exists.
+Before we start the time-consuming steps of removing stop words and preparing the web pages for language models, we therefore defined a fixed set of 10 keywords and we will count how many times these appear in the text (Table \@ref(tab:filter-keywords)).
+The keywords are translated in all languages using the *deeplr* package which allows us to translate up to 500,000 characters per month with a free DeepL account. The package did not support Persian, Arab, and Hebrew so those languages were translated using google translate.
+
+```{r eval = !file.exists(find_root_file("data", "filtering_keywords.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
+# Since an authentication key is needed to perform the translation, we save the translated keywords to github and load them from there.
+if (!file.exists(find_root_file("data", "filtering_keywords.yml",
+                               criterion =
+                               has_file("col_an_data_for_soc_sci.Rproj")))) {
+authentication_key <- "secret"
+keywords <-
+  data.frame(English = c("israel", "israeli", "palestine", "palestinian",
+                         "arab", "gaza", "intifada", "jewish", "zionism",
+                         "hamas"))
+keywords <- keywords %>%
+  mutate(Dutch = translate2(target_lang = "NL", source_lang = "EN",
+                             text = English, auth_key = authentication_key),
+        French = translate2(target_lang = "FR", source_lang = "EN",
+                             text = English, auth_key = authentication_key),
+        German = translate2(target_lang = "DE", source_lang = "EN",
+                             text = English, auth_key = authentication_key),
+        Italian = translate2(target_lang = "IT", source_lang = "EN",
+                             text = English, auth_key = authentication_key),
+        Spanish = translate2(target_lang = "ES", source_lang = "EN",
+                             text = English, auth_key = authentication_key),
+        Chinese = translate2(target_lang = "ZH", source_lang = "EN",
+                             text = English, auth_key = authentication_key),
+        Russian = translate2(target_lang = "RU", source_lang = "EN",
+                             text = English, auth_key = authentication_key)
+        )
+keywords$Arabic <- c("إسرائيل", "إسرائيلي", "فلسطين", "فلسطيني", "عربي", "غزة", "الانتفاضة", "يهودي", "صهيونية","حماس")
+keywords$Hebrew <- c("ישראל", "ישראלי", "פלסטין", "פלסטיני", "ערבי", "עזה", "אנטיפדה", "יהודי", "ציונות", "חמאס")
+keywords$Persian <- c("اسرائيل", "اسرائیلی", "فلسطین", "فلسطینی", "عربی", "غزه", "انتفاضه", "یهودی", "صهیونیسم", "حماس")
+git2rdata::write_vc(
+  keywords,
+  file = "filtering_keywords",
+  root = find_root_file("data",
+                        criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+}
+```
+```{r filter-keywords}
+keywords <- git2rdata::read_vc(
+  file = "filtering_keywords",
+  root = find_root_file("data",
+                        criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+keywords %>%
+  dplyr::select(English) %>%
+  kable(booktabs = TRUE,
+        caption = "Keywords used to filter the scraped web pages") %>%
+  kableExtra::kable_styling()
+
+```
+
+```{r eval = !file.exists(find_root_file("data", "keyword_frequency.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
+#calculate the total number of words and the number of times each keyword appears
+
+if (!file.exists(
+  find_root_file("data", "keyword_frequency.yml",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))) {
+nbs <-
+  data.frame(nchar = str_length(content$page_content),
+             israel = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[1,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             israeli = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[2,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             palestine = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[3,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             palestinian = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[4,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             arab = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[5,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             gaza = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[6,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             intifada = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[7,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             jewish = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[8,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             zionism = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[9,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }),
+             hamas = sapply(X = seq_len(nrow(content)),
+                             FUN = function(x){
+                               key <- keywords[10,
+                                               as.character(
+                                                 unlist(
+                                                   content[x, "language"]))]#get the term in the appropriate language
+                               return(str_count(
+                                 content[x, "page_content"],
+                                 regex(key, ignore_case = T)))
+                               }))
+nbs <- nbs %>%
+  mutate(
+    link = content$link,
+    language = content$language,
+    total = israel + israeli + palestine + palestinian + arab + gaza +
+      intifada + jewish + zionism + hamas,
+    totalperchar = total/nchar)
+git2rdata::write_vc(nbs,
+                    file = "keyword_frequency",
+                    root = find_root_file("data",
+                                 criterion =
+                                   has_file("col_an_data_for_soc_sci.Rproj")))
+}
+```
+
+```{r keyword-frequency, fig.cap = "Overview of the keyword frequency. X-axis is bound at 14 since this is the 90percent quantile for keyword frequency and there are many ouliers.", warning = FALSE, message = FALSE}
+nbs <- read_vc(file = "keyword_frequency",
+               root =
+                 find_root_file("data",
+                                criterion =
+                                  has_file("col_an_data_for_soc_sci.Rproj")))
+#get quantiles 
+quantiles <- nbs %>%
+    pivot_longer(cols = israel:hamas, names_to = "keyword",
+                 values_to = "frequency") %>%
+  dplyr::pull(frequency) %>%
+  quantile(probs = seq(0,1,0.05))
+ 
+nbs %>%
+  pivot_longer(cols = israel:hamas, names_to = "keyword",
+               values_to = "frequency") %>%
+  dplyr::filter(frequency <= 14) %>%
+  ggplot() +
+  geom_histogram(aes(x = frequency)) +
+  facet_wrap(vars(keyword)) +
+  theme_bw() +
+  ylab("number of web pages") +
+  xlab("number of times the keyword appears")
+```
+
+```{r total-keywords, fig.cap="Total number of times any of the characters appears in the web page (on the left) and corrected for the length of the web page (on the right). Outliers to the right are not shown.", warning = FALSE, message = FALSE}
+p1 <- nbs %>%
+  ggplot(aes(x = total)) +
+  geom_histogram() +
+  xlim(0, 800) +
+  ylim(0, 2000) +
+  theme_bw() +
+  xlab("number of times any of the keywords appears") +
+  ylab("number of web pages")
+p2 <- nbs %>%
+  ggplot(aes(x = totalperchar)) +
+  geom_histogram() +
+  xlim(0, 0.05) +
+  ylim(0, 1000) +
+  theme_bw() +
+  xlab("number of times any of the keywords appears,\n divided by the number of characters") +
+  ylab("number of web pages")
+
+p1 + p2
+
+quantiles <- nbs %>%
+  dplyr::pull(totalperchar) %>%
+  quantile(probs = seq(0,1,0.05), na.rm = TRUE)
+a <- (nbs$total > 5 & nbs$totalperchar > 0.00121)
+keep_total <- sum(a)
+
+content_filtered <- content %>%
+                dplyr::filter(link %in% nbs[a, "link"])
+#save the filtered web pages for further data exploration
+write_parquet(x = content_filtered,
+                  find_root_file("data", "content-filtered.parquet",
+                                   criterion =
+                                     has_file("col_an_data_for_soc_sci.Rproj")))
+
+```
+
+Figure \@ref(fig:keyword-frequency) shows how often each of the keywords appear in the web pages.
+We will sum the frequency for each of the keywords to obtain the total number of time *any* of the keywords appear in each of the web pages (see the Figure \@ref(fig:total-keywords) on the left). To correct for the length of a web page, we divide this total by the number of characters in the web page (see the Figure \@ref(fig:total-keywords) on the right). 
+
+In over 15% of the web pages, any of the keywords appear. These web pages are for sure irrelevant.
+Since we only want to keep web pages that are relevant for our topic of interest, we will only keep web pages where any of the keywords appear at least 5 times and the total keyword frequency, divided by the number of characters is at least 0.00121 (that is the 30% quantile). In total, this reduces out dataset from `r nrow(content)` to `r keep_total` (`r round(100*keep_total/nrow(content), 2)`%) web pages.
+
+```{r keep-per-language, fig.cap = "Number of web pages that are filtered out for each of the languages in absolute numbers (left) and in percentages (right)."}
+p1 <- nbs %>%
+  mutate(keep = total > 5 & totalperchar > 0.00121) %>%
+  ggplot(aes(x=language)) +
+  geom_bar(aes(fill = keep)) +
+  theme_bw() +
+  ylab("number of web pages") +
+  coord_flip()
+p2 <- nbs %>%
+  mutate(keep = total > 5 & totalperchar > 0.00121) %>%
+  ggplot(aes(x=language)) +
+  geom_bar(aes(fill = keep), position = "fill") +
+  theme_bw() +
+  ylab("fraction of web pages") +
+  xlab("") +
+  coord_flip()
+combined <- p1 + p2 & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
+```
+
+
 # Discussion
 
 \clearpage
