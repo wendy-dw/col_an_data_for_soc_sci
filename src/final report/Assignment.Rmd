@@ -40,9 +40,10 @@ library(deeplr)          #for easy translations from R
 source(find_root_file("src", "final report", "helperfunctions.R",
                       criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 
-knitr::opts_chunk$set(echo = FALSE) # do not show code by default.
-knitr::opts_knit$set(
-  root.dir = find_root(criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+knitr::opts_chunk$set(echo = FALSE, # do not show code by default.
+                      appendix = TRUE) # include all code in appendix by default
+# knitr::opts_knit$set(
+#   root.dir = find_root(criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 
 # important option for text analysis
 options(stringsAsFactors = F)
@@ -55,8 +56,11 @@ The Israeli-Palestinian conflict has its origins in the late 19$^{th}$ and early
 Wikipedia pages are typically written by a community of interested and motivated volunteers. Pages on the most popular/important topics typically exist in many different languages and the content may differ quite substantially, depending on the language. They are typically not a literal translation from one language to the other but are typically written by speakers of the language with some knowledge on the topic at hand. We will focus on the languages spoken by Israeli (Hebrew), the Palestinians (Arabic), some "Western" languages (English, Dutch, French, German, Italian, Spanish) and some Eastern languages (Chinese, Russian, Persian).
 
 
-! [Division of Palestinian and Israeli territory over the years (source: https://yalibnan.com/2014/06/27/eu-warns-business-israeli-settlements/)](vanishing-palestine.jpg)
-
+```{r territory, echo=FALSE, fig.cap= "Division of Palestinian and Israeli territory over the years (source: https://yalibnan.com/2014/06/27/eu-warns-business-israeli-settlements/)", out.width = "15cm"}
+knitr::include_graphics(
+  find_root_file("data", "fig", "vanishing-palestine.jpg",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
 
 ## Literature review
 
@@ -87,6 +91,7 @@ We will show all code used to web scrape the relevant Wikipedia pages. However, 
 The web scraping starts from **one** Wikipedia page for each language. Starting from the English version of "Israeli-Palestinian conflict" page ([here](https://en.wikipedia.org/wiki/Israeli%E2%80%93Palestinian_conflict)), we manually get the link to all other 10 languages of interest for this page. Starting from these 11 URLs, we get all links to other Wikipedia pages in the same language that are accessible from the "Israeli-Palestinian conflict" page. 
 
 ```{r webscraping-geturls, echo = FALSE, eval = !file.exists(find_root_file("data", "all_urls.yml", criterion =  has_file("col_an_data_for_soc_sci.Rproj")))}
+#-------------------------------webscraping------------------------------------#
 if(!file.exists(
   find_root_file("data", "all_urls.yml",
                  criterion =  has_file("col_an_data_for_soc_sci.Rproj")))){
@@ -127,8 +132,9 @@ if(!file.exists(
                                    has_file("col_an_data_for_soc_sci.Rproj")))
 }
 ```
+
 ```{r webscraping-geturls-load, eval = file.exists(find_root_file("data", "all_urls.yml", criterion =     has_file("col_an_data_for_soc_sci.Rproj")))}
-#load the file locally if it exists
+#load the webscraped content file locally if it exists
 links <- read_vc(
   file = "all_urls",
   root = find_root_file("data",
@@ -141,6 +147,7 @@ links <- read_vc(
 In total, this search yields `r nrow(links)` URLs for all 11 languages. Figure \@ref(fig:nb-urls) shows the number of linked Wikipedia pages for each of the languages on the left. For comparison, we show the number of (native) speaker on the right since the number of Wikipedia pages will depend a lot on the number of speakers who can write the pages. Taking both into account, we can see that Arabic and English have the most Wikipedia pages linked to the "Israeli-Palestinian conflict" page. Arabic and Hebrew, logically, have much more Wikipedia pages on the issue than what would be expected, given their lower number of native speakers.   
 
 ```{r nb-urls, fig.cap = "Number of URLs per language on the left and the number of (native) speakers on the right.", warning = FALSE, message = FALSE}
+#--------------------------plot number of urls per language--------------------#
 p1 <- links %>%
   ggplot(aes(y = reorder(language, language,
                      function(x)-length(x)))) +
@@ -173,7 +180,7 @@ p2 <- ggplot(language_popularity %>%
   scale_fill_discrete("",
                       breaks = c("first_language", "second_language"),
                       labels = c("First language", "Second language")) +
-  theme(legend.position = c(0.7,  0.8))
+  theme(legend.position = c(0.65,  0.8))
 p1 + p2
   
 ```
@@ -181,6 +188,7 @@ p1 + p2
 For each of these links, we get the page title, the body of text, and the dates that the page was first published and last edited.
 
 ```{r webscraping-get-url-content, eval = !file.exists(find_root_file("data", "content.parquet", criterion =     has_file("col_an_data_for_soc_sci.Rproj")))}
+#----------------------------webscrape all website content---------------------#
 if (!file.exists(
   find_root_file("data", "content.parquet",
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))) {
@@ -224,7 +232,9 @@ Before we start the time-consuming steps of removing stop words and preparing th
 The keywords are translated in all languages using the *deeplr* package which allows us to translate up to 500,000 characters per month with a free DeepL account. The package did not support Persian, Arab, and Hebrew so those languages were translated using google translate.
 
 ```{r eval = !file.exists(find_root_file("data", "filtering_keywords.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
-# Since an authentication key is needed to perform the translation, we save the translated keywords to github and load them from there.
+#--------------------------Filtering relevant web pages------------------------#
+# Since an authentication key is needed to perform the translation,
+# #we save the translated keywords to github and load them from there.
 if (!file.exists(find_root_file("data", "filtering_keywords.yml",
                                criterion =
                                has_file("col_an_data_for_soc_sci.Rproj")))) {
@@ -274,7 +284,6 @@ keywords %>%
 
 ```{r eval = !file.exists(find_root_file("data", "keyword_frequency.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #calculate the total number of words and the number of times each keyword appears
-
 if (!file.exists(
   find_root_file("data", "keyword_frequency.yml",
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))) {
@@ -285,7 +294,7 @@ nbs <-
                                key <- keywords[1,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -295,7 +304,7 @@ nbs <-
                                key <- keywords[2,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -305,7 +314,7 @@ nbs <-
                                key <- keywords[3,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -315,7 +324,7 @@ nbs <-
                                key <- keywords[4,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -325,7 +334,7 @@ nbs <-
                                key <- keywords[5,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -335,7 +344,7 @@ nbs <-
                                key <- keywords[6,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -345,7 +354,7 @@ nbs <-
                                key <- keywords[7,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -355,7 +364,7 @@ nbs <-
                                key <- keywords[8,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -365,7 +374,7 @@ nbs <-
                                key <- keywords[9,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -375,7 +384,7 @@ nbs <-
                                key <- keywords[10,
                                                as.character(
                                                  unlist(
-                                                   content[x, "language"]))]#get the term in the appropriate language
+                                                   content[x, "language"]))]
                                return(str_count(
                                  content[x, "page_content"],
                                  regex(key, ignore_case = T)))
@@ -396,6 +405,7 @@ git2rdata::write_vc(nbs,
 ```
 
 ```{r keyword-frequency, fig.cap = "Overview of the keyword frequency. X-axis is bound at 14 since this is the 90percent quantile for keyword frequency and there are many ouliers.", warning = FALSE, message = FALSE}
+#load the file locally if it exists
 nbs <- read_vc(file = "keyword_frequency",
                root =
                  find_root_file("data",
@@ -421,6 +431,7 @@ nbs %>%
 ```
 
 ```{r total-keywords, fig.cap="Total number of times any of the characters appears in the web page (on the left) and corrected for the length of the web page (on the right). Outliers to the right are not shown.", warning = FALSE, message = FALSE}
+#Plot the number of times the keywords appears
 p1 <- nbs %>%
   ggplot(aes(x = total)) +
   geom_histogram() +
@@ -445,7 +456,9 @@ quantiles <- nbs %>%
   quantile(probs = seq(0,1,0.05), na.rm = TRUE)
 a <- (nbs$total > 5 & nbs$totalperchar > 0.00121)
 keep_total <- sum(a)
+```
 
+```{r write-filtered-web-pages, eval = !file.exists(find_root_file("data", "content-filtered.parquet",                                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 content_filtered <- content %>%
                 dplyr::filter(link %in% nbs[a, "link"])
 #save the filtered web pages for further data exploration
@@ -456,6 +469,12 @@ write_parquet(x = content_filtered,
 
 ```
 
+```{r read-filtered-web-pages, eval = !file.exists(find_root_file("data", "content-filtered.parquet",                                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
+content_filtered <- read_parquet(
+  find_root_file("data", "content-filtered.parquet",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
+
 Figure \@ref(fig:keyword-frequency) shows how often each of the keywords appear in the web pages.
 We will sum the frequency for each of the keywords to obtain the total number of time *any* of the keywords appear in each of the web pages (see the Figure \@ref(fig:total-keywords) on the left). To correct for the length of a web page, we divide this total by the number of characters in the web page (see the Figure \@ref(fig:total-keywords) on the right). 
 
@@ -463,16 +482,17 @@ In over 15% of the web pages, any of the keywords appear. These web pages are fo
 Since we only want to keep web pages that are relevant for our topic of interest, we will only keep web pages where any of the keywords appear at least 5 times and the total keyword frequency, divided by the number of characters is at least 0.00121 (that is the 30% quantile). In total, this reduces out dataset from `r nrow(content)` to `r keep_total` (`r round(100*keep_total/nrow(content), 2)`%) web pages.
 
 ```{r keep-per-language, fig.cap = "Number of web pages that are filtered out for each of the languages in absolute numbers (left) and in percentages (right)."}
+#plot how many web pages remain after filtering, per language
 p1 <- nbs %>%
   mutate(keep = total > 5 & totalperchar > 0.00121) %>%
-  ggplot(aes(x=language)) +
+  ggplot(aes(x = language)) +
   geom_bar(aes(fill = keep)) +
   theme_bw() +
   ylab("number of web pages") +
   coord_flip()
 p2 <- nbs %>%
   mutate(keep = total > 5 & totalperchar > 0.00121) %>%
-  ggplot(aes(x=language)) +
+  ggplot(aes(x = language)) +
   geom_bar(aes(fill = keep), position = "fill") +
   theme_bw() +
   ylab("fraction of web pages") +
@@ -481,6 +501,8 @@ p2 <- nbs %>%
 combined <- p1 + p2 & theme(legend.position = "bottom")
 combined + plot_layout(guides = "collect")
 ```
+
+## Cleaning the web page content and stop word removal
 
 
 # Discussion
@@ -491,5 +513,9 @@ combined + plot_layout(guides = "collect")
 
 # Appendix
 
+## All code for this report
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
 
 # Bibliography
