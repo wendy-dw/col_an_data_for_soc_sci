@@ -263,7 +263,7 @@ keywords <- keywords %>%
         )
 keywords$Arabic <- c("إسرائيل", "إسرائيلي", "فلسطين", "فلسطيني", "عربي", "غزة", "الانتفاضة", "يهودي", "صهيونية","حماس")
 keywords$Hebrew <- c("ישראל", "ישראלי", "פלסטין", "פלסטיני", "ערבי", "עזה", "אנטיפדה", "יהודי", "ציונות", "חמאס")
-keywords$Persian <- c("اسرائيل", "اسرائیلی", "فلسطین", "فلسطینی", "عربی", "غزه", "انتفاضه", "یهودی", "صهیونیسم", "حماس")
+keywords$Persian <- c("رژیم صهیونیستی", "اسرائیلی", "فلسطین", "فلسطینی", "عربی", "غزه", "انتفاضه", "یهودی", "صهیونیسم", "حماس")
 git2rdata::write_vc(
   keywords,
   file = "filtering_keywords",
@@ -432,7 +432,7 @@ nbs %>%
   xlab("number of times the keyword appears")
 ```
 
-```{r total-keywords, fig.cap="Total number of times any of the characters appears in the web page (on the left) and corrected for the length of the web page (on the right). Outliers to the right are not shown.", warning = FALSE, message = FALSE}
+```{r total-keywords, fig.cap="Total number of times any of the characters appears in the web page (on the left) and corrected for the length of the web page (on the right). Outliers to the right are not shown.", warning = FALSE, message = FALSE, fig.width = 8}
 #Plot the number of times the keywords appears
 p1 <- nbs %>%
   ggplot(aes(x = total)) +
@@ -483,6 +483,10 @@ We will sum the frequency for each of the keywords to obtain the total number of
 In over 15% of the web pages, any of the keywords appear. These web pages are for sure irrelevant.
 Since we only want to keep web pages that are relevant for our topic of interest, we will only keep web pages where any of the keywords appear at least 5 times and the total keyword frequency, divided by the number of characters is at least 0.00121 (that is the 30% quantile). In total, this reduces out dataset from `r nrow(content)` to `r keep_total` (`r round(100*keep_total/nrow(content), 2)`%) web pages.
 
+Figure \@ref(fig:keep-per-language) shows that relatively many Persian web pages are filtered out.
+Upon further inspection, it was clear that the Persian word for Israel, اسرائيل, could be found in exactly zero web pages.
+Native speakers could tell us that, since Iran does not recognise Israel as a country, they call it "zionist regime",رژیم صهیونیستی , or "occupied Palestine", فلسطین اشغالی in stead. Since "zionist regime" had the most hits, we used that term in stead but it still yielded far less matches than the term Israel got in any other language.
+
 ```{r keep-per-language, fig.cap = "Number of web pages that are filtered out for each of the languages in absolute numbers (left) and in percentages (right)."}
 #plot how many web pages remain after filtering, per language
 p1 <- nbs %>%
@@ -506,14 +510,15 @@ combined + plot_layout(guides = "collect")
 
 ## Text pre-processing
 
-The wikipedia page content contains a lot of redundant characters like references to other web pages (in the form of a number between square brackets) and line breaks denoted by '\n'.
+The wikipedia page content contains a lot of redundant characters like references to other web pages (in the form of a number between square brackets) and line breaks.
 Special care was taken since numbers in the Persian language are not the commonly used arabic numerals.
 
 Next, the R package *tokenizers* is used to tokenize the cleaned content into sentences (see also the [package documentation](https://cran.r-project.org/web/packages/tokenizers/vignettes/introduction-to-tokenizers.html)).
-Using the *tm* package, we then bring all text to lower case, remove punctuation, remove numbers, remove stopwords, and finally generate a document-term matrix for each of the languages.
+Using the *tm* package, we then bring all text to lower case, remove punctuation, remove numbers, remove stopwords.
 We use the R package *stopwords* to filter stopwords from the text since this package contains stopwords in many languages which is a must for our analysis (see also the [package documentation](https://cran.r-project.org/web/packages/stopwords/readme/README.html)).
+Finally, a document-term matrix is generated for each of the languages.
 
-```{r}
+```{r warning = FALSE, message = FALSE, eval = !file.exists(find_root_file("data", "dtm.Rdata", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #-----------------------------text pre-processing------------------------------#
 content_filtered <-
   content_filtered %>%
@@ -559,9 +564,16 @@ dtm <- furrr::future_map(seq_len(nrow(loopover)),
                             lang = loopover[x, "lang"],
                             language_short = loopover[x, "language_short"],
                             src = loopover[x, "source"]))
+names(dtm) <- loopover$lang
 save(dtm, file = find_root_file("data", "dtm.Rdata",
                       criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
+```{r warning = FALSE, message = FALSE, eval = file.exists(find_root_file("data", "dtm.Rdata", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
+#load dtm locally if it exists
+load(find_root_file("data", "dtm.Rdata",
+                      criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
+
 # Discussion
 
 \clearpage
