@@ -20,7 +20,7 @@ editor_options:
 ```{r setup, include=FALSE, message=FALSE, warning=FALSE, appendix=TRUE}
 #---------------------------load all packages----------------------------------#
 #General packages
-library(tidyverse)       #Data wrangling and ggplot
+library(tidyverse)       #Data wrangling and ggplot, also contains stringr
 library(rprojroot)       #Relative file paths for reproducibility
 library(kableExtra)      #Pretty "kable" tables
 library(git2rdata)       #to efficiently store data on github
@@ -30,11 +30,13 @@ library(patchwork)       #combining ggplot figures
 #packages for web scraping
 library(webdriver)
 library(rvest)
-library(furrr)           #webscrape in parallel
+library(furrr)           #process in parallel
 
 #packages for languages
 library(deeplr)          #for easy translations from R
-
+library(stopwords)       #multi-lingual database with stopwords
+library(tokenizers)      #for tokenization
+library(tm)              #text mining in R
 
 #load custom functions
 source(find_root_file("src", "final report", "helperfunctions.R",
@@ -502,9 +504,64 @@ combined <- p1 + p2 & theme(legend.position = "bottom")
 combined + plot_layout(guides = "collect")
 ```
 
-## Cleaning the web page content and stop word removal
+## Text pre-processing
 
+The wikipedia page content contains a lot of redundant characters like references to other web pages (in the form of a number between square brackets) and line breaks denoted by '\n'.
+Special care was taken since numbers in the Persian language are not the commonly used arabic numerals.
 
+Next, the R package *tokenizers* is used to tokenize the cleaned content into sentences (see also the [package documentation](https://cran.r-project.org/web/packages/tokenizers/vignettes/introduction-to-tokenizers.html)).
+Using the *tm* package, we then bring all text to lower case, remove punctuation, remove numbers, remove stopwords, and finally generate a document-term matrix for each of the languages.
+We use the R package *stopwords* to filter stopwords from the text since this package contains stopwords in many languages which is a must for our analysis (see also the [package documentation](https://cran.r-project.org/web/packages/stopwords/readme/README.html)).
+
+```{r}
+#-----------------------------text pre-processing------------------------------#
+content_filtered <-
+  content_filtered %>%
+  mutate(page_content = str_replace_all(page_content, "\n", " "), #page breaks
+         page_content = str_replace_all(page_content,
+                                        "\\[[\u06F0-\u06F90-9]+\\]", ""),
+         #references with arabic numerals or persian numerals
+         page_content = str_replace_all(page_content, "[\"']", ""),
+         page_content = str_squish(page_content)
+         )
+# tokenize the cleaned content into sentences
+content_filtered <- content_filtered %>%
+  mutate(tokenized_content =
+           sapply(content_filtered$page_content,
+                  function(content) {
+                    sentences <- unlist(tokenize_sentences(content))
+                    return(sentences)
+                    })
+         )
+#a function to get the document-term matrix for a language
+corpus_dtm <- function(lang, language_short, src){
+  data <- content_filtered %>% filter(language == lang)
+  stop_words <- stopwords::stopwords(language = language_short, source = src)
+  corpus <- Corpus(VectorSource(data$tokenized_content)) %>%
+    tm_map(content_transformer(tolower)) %>%
+    tm_map(removePunctuation) %>%
+    tm_map(removeNumbers) %>%
+    tm_map(removeWords, stop_words) %>%
+    tm_map(stripWhitespace)
+  dtm <- DocumentTermMatrix(corpus)
+  return(dtm)
+}
+loopover <-
+  data.frame(lang = unique(as.character(content$language)),
+             language_short = c("en", "he", "ar", "nl", "fr", "de", "it", "es",
+                                "zh", "ru", "fa"),
+             source = c("snowball", "stopwords-iso", "misc", "stopwords-iso",
+                        "stopwords-iso", "stopwords-iso", "stopwords-iso",
+                        "stopwords-iso", "stopwords-iso", "stopwords-iso",
+                        "stopwords-iso"))
+dtm <- furrr::future_map(seq_len(nrow(loopover)),
+                          .f = function(x) corpus_dtm(
+                            lang = loopover[x, "lang"],
+                            language_short = loopover[x, "language_short"],
+                            src = loopover[x, "source"]))
+save(dtm, file = find_root_file("data", "dtm.Rdata",
+                      criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
 # Discussion
 
 \clearpage
