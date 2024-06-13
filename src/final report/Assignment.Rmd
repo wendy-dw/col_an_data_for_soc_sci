@@ -37,6 +37,8 @@ library(deeplr)          #for easy translations from R
 library(stopwords)       #multi-lingual database with stopwords
 library(tokenizers)      #for tokenization
 library(tm)              #text mining in R
+library(wordcloud)       #to create a word cloud
+library(syuzhet)         #for multi-lingual sentiment analysis
 
 #load custom functions
 source(find_root_file("src", "final report", "helperfunctions.R",
@@ -460,7 +462,7 @@ a <- (nbs$total > 5 & nbs$totalperchar > 0.00121)
 keep_total <- sum(a)
 ```
 
-```{r write-filtered-web-pages, eval = !file.exists(find_root_file("data", "content-filtered.parquet",                                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
+```{r write-filtered-web-pages, eval = !file.exists(find_root_file("data", "content-filtered.parquet", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 content_filtered <- content %>%
                 dplyr::filter(link %in% nbs[a, "link"])
 #save the filtered web pages for further data exploration
@@ -471,7 +473,7 @@ write_parquet(x = content_filtered,
 
 ```
 
-```{r read-filtered-web-pages, eval = !file.exists(find_root_file("data", "content-filtered.parquet",                                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
+```{r read-filtered-web-pages, eval = file.exists(find_root_file("data", "content-filtered.parquet", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 content_filtered <- read_parquet(
   find_root_file("data", "content-filtered.parquet",
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))
@@ -516,10 +518,13 @@ Special care was taken since numbers in the Persian language are not the commonl
 Next, the R package *tokenizers* is used to tokenize the cleaned content into sentences (see also the [package documentation](https://cran.r-project.org/web/packages/tokenizers/vignettes/introduction-to-tokenizers.html)).
 Using the *tm* package, we then bring all text to lower case, remove punctuation, remove numbers, remove stopwords.
 We use the R package *stopwords* to filter stopwords from the text since this package contains stopwords in many languages which is a must for our analysis (see also the [package documentation](https://cran.r-project.org/web/packages/stopwords/readme/README.html)).
-Finally, a document-term matrix is generated for each of the languages.
+Finally, a document-term matrix is generated for each of the languages. These document-term matrices are used in appendix \@ref(wordclouds) to create a word cloud for each of the languages.
 
 ```{r warning = FALSE, message = FALSE, eval = !file.exists(find_root_file("data", "dtm.Rdata", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #-----------------------------text pre-processing------------------------------#
+if (!file.exists(
+  find_root_file("data", "dtm.Rdata",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))) {
 content_filtered <-
   content_filtered %>%
   mutate(page_content = str_replace_all(page_content, "\n", " "), #page breaks
@@ -567,11 +572,34 @@ dtm <- furrr::future_map(seq_len(nrow(loopover)),
 names(dtm) <- loopover$lang
 save(dtm, file = find_root_file("data", "dtm.Rdata",
                       criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+}
 ```
 ```{r warning = FALSE, message = FALSE, eval = file.exists(find_root_file("data", "dtm.Rdata", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #load dtm locally if it exists
 load(find_root_file("data", "dtm.Rdata",
                       criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+```
+
+## Sentiment analysis per page
+
+```{r cache = TRUE, warning = FALSE, message = FALSE}
+# sentiment analysis for each page (language independent)
+content_filtered <- content_filtered %>%
+  mutate(
+    sentiment_score = get_sentiment(page_content, method = "syuzhet")
+  )
+
+```
+
+```{r hist-sentiment, fig.cap = "Histogram of the sentiment score for all documents in each of the languages.", fig.height = 8, warning = FALSE, message = FALSE}
+content_filtered %>%
+  ggplot() +
+  geom_histogram(aes(x = sentiment_score)) +
+   facet_wrap(vars(language),
+              scales = "free",
+              ncol = 4) +
+  theme_bw() +
+  ylab("Number of documents")
 ```
 
 # Discussion
@@ -581,6 +609,103 @@ load(find_root_file("data", "dtm.Rdata",
 \appendix
 
 # Appendix
+
+## Wordclouds
+
+```{r}
+included_term_frequency <- 0.95
+max_terms <- 500
+create_wordcloud <- function(lang = "English",
+                             included_term_frequency = included_term_frequency,
+                             max_terms = max_terms) {
+  d <- dtm[[lang]]
+  freqr <- colSums(as.matrix(d))
+  if ((1-included_term_frequency) * length(freqr) > max_terms){
+    #choose only the top *max_terms* terms
+    qt_d <- quantile(freqr, probs = (1-max_terms/length(freqr)))
+    d2 <- as.matrix(d)[, freqr > qt_d]
+    freqr <- colSums(d2)
+  } else {
+    #get the top (1-included_term_frequency) terms
+    qt_d <- quantile(freqr, probs = included_term_frequency)
+    d2 <- as.matrix(d)[, freqr > qt_d]
+    freqr <- colSums(d2)
+  }
+  p <- wordcloud(names(freqr), freqr,
+                 colors = brewer.pal(4, "Dark2"))
+  return(p)
+}
+```
+
+In this section, we present word clouds based on the document-term matrices for each of the languages. To avoid over-cluttering the wordcloud, we only include the `r (1 - included_term_frequency)*100`% of terms that appear most often in that language, with a maximum of `r max_terms`.
+
+```{r wordcloud-eng, fig.cap= "Wordcloud for the English Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "English",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-he, fig.cap= "Wordcloud for the Hebrew Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Hebrew",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-ar, fig.cap= "Wordcloud for the Arabic Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Arabic",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-du, fig.cap= "Wordcloud for the Dutch Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Dutch",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-fr, fig.cap= "Wordcloud for the French Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "French",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-de, fig.cap= "Wordcloud for the German Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "German",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-it, fig.cap= "Wordcloud for the Italian Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Italian",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-sp, fig.cap= "Wordcloud for the Spanish Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Spanish",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-chi, fig.cap= "Wordcloud for the Chinese Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Chinese",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-ru, fig.cap= "Wordcloud for the Russian Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Russian",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+```{r wordcloud-fa, fig.cap= "Wordcloud for the Persian Wikipedia pages.", warning = FALSE, message = FALSE}
+create_wordcloud(lang = "Persian",
+                 included_term_frequency = included_term_frequency,
+                 max_terms = max_terms)
+```
+
+
 
 ## All code for this report
 
