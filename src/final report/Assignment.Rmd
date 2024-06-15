@@ -26,7 +26,9 @@ library(kableExtra)      #Pretty "kable" tables
 library(git2rdata)       #to efficiently store data on github
 library(arrow)           #save and load parquet files
 library(patchwork)       #combining ggplot figures
-
+library(htmlwidgets)     #saving wordcloud
+library(webshot)         #saving wordcloud
+library(tidytext)
 #packages for web scraping
 library(webdriver)
 library(rvest)
@@ -37,7 +39,7 @@ library(deeplr)          #for easy translations from R
 library(stopwords)       #multi-lingual database with stopwords
 library(tokenizers)      #for tokenization
 library(tm)              #text mining in R
-library(wordcloud)       #to create a word cloud
+library(wordcloud2)       #to create a word cloud
 library(syuzhet)         #for multi-lingual sentiment analysis
 
 #load custom functions
@@ -77,7 +79,6 @@ Similarly, @alsubari2024online base their research on news channel streams to as
 Other examples where opinions are compared in different languages are @abusheikh2023digital and @al2012automatic. The latter is of particular interest since they also base their research on wikipedia pages. 
 
 # Methodology
-
 
 We plan to follow the following steps:
 
@@ -582,6 +583,9 @@ load(find_root_file("data", "dtm.Rdata",
 
 ## Sentiment analysis per page
 
+
+\@ref(fig:hist-sentiment) shows the sentiment score for each of the languages. Although the *syuzhet* provides support for sentiment detection in several languages by using the expanded NRC lexicon from Saif Mohammed, languages that use non-Latin character sets are not yet implemented in the current release which can be seen in the histogram since almost all scores are equal to zero in those languages.
+
 ```{r cache = TRUE, warning = FALSE, message = FALSE}
 # sentiment analysis for each page (language independent)
 content_filtered <- content_filtered %>%
@@ -600,6 +604,151 @@ content_filtered %>%
               ncol = 4) +
   theme_bw() +
   ylab("Number of documents")
+```
+
+Nevertheless, we can visualise the sentiment in the Wikipedia pages over time.
+Figure \@ref(fig:sent-date-published) and Figure \@ref(fig:sent-date-modified) show the sentiment in the Wikipedia pages over time, based on the date that the page was first published or last modified respectively.
+
+
+```{r sent-date-published, fig.cap="Sentiment over time in different languages, based on the date that the page was first published.", warning = FALSE, message = FALSE}
+# Data
+content_time <- content_filtered %>%
+  mutate(
+    date_published = as.Date(date_published)
+  )
+
+# Colourcoding
+language_colors <- c("Arabic" = "#1f77b4",  
+                     "Chinese" = "#ff7f0e", 
+                     "Dutch" = "#2ca02c",   
+                     "English" = "#9467bd", 
+                     "German" = "#8c564b", 
+                     "Hebrew" = "#e377c2", 
+                     "Italian" = "#bcbd22",  
+                     "Persian" = "#17becf", 
+                     "Russian" =  "#aec7e8", 
+                     "Spanish" =  "#ff9896"
+                    )
+
+# Plotting
+start_date <- as.Date("2005-01-01")
+end_date <- as.Date("2024-05-31")
+
+ggplot(content_time, aes(x = date_published, y = sentiment_score,
+                         color = language)) +
+  geom_smooth(method = "loess", se = FALSE, size = 0.75) + 
+  scale_color_manual(values = language_colors) + 
+  scale_x_date(limits = c(start_date, end_date)) +
+  scale_y_continuous(limits = c(-1, 1)) +
+  labs(x = "Date Published", y = "Sentiment Score",
+       color = "Language") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")  
+```
+
+```{r sent-date-modified, fig.cap="Sentiment over time in different languages, based on the date that the page was last modified.", warning = FALSE, message = FALSE}
+content_date_modified <- content_filtered %>%
+  mutate(
+    date_modified = as.Date(date_modified)
+  )
+
+# Setting the range of the plot + plotting
+start_date <- as.Date("2023-05-31")
+end_date <- as.Date("2024-05-31")
+
+ggplot(content_date_modified, aes(x = date_modified, y = sentiment_score, color = language)) +
+  geom_smooth(method = "loess", se = FALSE, size = 1) +  
+  geom_vline(xintercept = as.numeric(as.Date("2023-10-07")), color = "red") + #Day that the Israel-Hamas war began
+   scale_color_manual(values = language_colors) + 
+  scale_x_date(limits = c(start_date, end_date)) +  
+  scale_y_continuous(limits = c(-0.5, 0.5)) +  
+  labs(x = "Date Published", y = "Sentiment Score", color = "Language") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom") 
+
+```
+
+We can also visualize the sentiment categories as predicted by the syuzhet package, using the NRC sentiment dictionary. This calculates the presence of eight emotions in the texts. Figure \@ref(fig:nrc-posneg), \@ref(fig:nrc-by-cat), and \@ref(fig:nrc-avg-sent) show the results of this analysis.
+
+```{r nrc-posneg, cache = TRUE, fig.cap = "Not sure how to describe the figure.", warning = FALSE, message = FALSE}
+nrc_data <- content_filtered %>%
+  mutate(page_content = as.character(page_content)) %>%
+  mutate(language = as.factor(language)) %>%
+  group_by(language) %>%
+  mutate(sentiment_scores = get_nrc_sentiment(page_content)) %>%
+  ungroup()
+
+nrc_data <- nrc_data %>%
+  unnest(sentiment_scores)
+
+# Positive or Negative Sentiment
+sentiment_pos_neg <- c("negative", "positive")
+
+# Calculate mean sentiment scores by language
+sentiment_pos_neg_summary <- nrc_data %>%
+  group_by(language) %>%
+  summarise(across(all_of(sentiment_pos_neg), mean, na.rm = TRUE))
+
+# Reshape data for plotting
+sentiment_pos_neg_convert <- tidyr::pivot_longer(sentiment_pos_neg_summary, 
+                                             cols = -language, 
+                                             names_to = "sentiment_category", 
+                                             values_to = "mean_score")
+
+# Plotting
+ggplot(sentiment_pos_neg_convert,
+       aes(x = sentiment_category, y = mean_score,
+           fill = reorder(language, mean_score, FUN = function(x) -mean(x)))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_color_manual(values = language_colors) + 
+  facet_wrap(~ sentiment_category, scales = "free") +  
+  labs(x = "Sentiment Category", y = "Mean Sentiment Score",
+       fill = "Language") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r nrc-by-cat, cache = TRUE, fig.cap = "Not sure how to describe the figure.", warning = FALSE, message = FALSE}
+# List of sentiment categories
+sentiment_categories <- c("anticipation", "disgust", "fear", "joy", "sadness",
+                          "surprise", "trust")
+
+# Calculate mean sentiment scores by language
+sentiment_summary <- nrc_data %>%
+  group_by(language) %>%
+  summarise(across(all_of(sentiment_categories), mean, na.rm = TRUE))
+
+# Reshape data for plotting 
+sentiment_summary_long <- tidyr::pivot_longer(sentiment_summary, 
+                                             cols = -language, 
+                                             names_to = "sentiment_category", 
+                                             values_to = "mean_score")
+
+# Plotting
+ggplot(sentiment_summary_long,
+       aes(x = sentiment_category, y = mean_score,
+           fill = reorder(language, mean_score,
+                          FUN = function(x) -mean(x)))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_color_manual(values = language_colors) + 
+  facet_wrap(~ sentiment_category, scales = "free") +  
+  labs (y = "Mean Sentiment Score", fill = "Sentiment Category") +
+  theme_minimal()
+
+```
+
+```{r nrc-avg-sent, cache = TRUE, fig.cap = "Average sentiment per language.", warning = FALSE, message = FALSE}
+ggplot(sentiment_summary_long,
+       aes(x = fct_reorder(sentiment_category, mean_score),
+           y = mean_score, fill = sentiment_category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ language, scales = "free") +  
+  labs(x = "Sentiment Category", y = "Mean Sentiment Score",
+       fill = "Sentiment Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 # Discussion
@@ -631,66 +780,84 @@ create_wordcloud <- function(lang = "English",
     d2 <- as.matrix(d)[, freqr > qt_d]
     freqr <- colSums(d2)
   }
-  p <- wordcloud(names(freqr), freqr,
-                 colors = brewer.pal(4, "Dark2"))
+  # p <- wordcloud(names(freqr), freqr,
+  #                colors = brewer.pal(4, "Dark2"))
+  p <- wordcloud2(data = data.frame(word = names(freqr),
+                               freq = freqr))
   return(p)
+}
+if (!file.exists(find_root_file("wordcloud_Dutch.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))) {
+  for (lang in names(dtm)) {
+    p <- create_wordcloud(lang = lang,
+                   included_term_frequency = included_term_frequency,
+                   max_terms = max_terms)
+    saveWidget(p,"tmp.html",selfcontained = F)
+    webshot("tmp.html",
+            sprintf("wordcloud_%s.pdf",lang),
+            delay = 5, vwidth = 480, vheight = 480)
+  }
 }
 ```
 
 In this section, we present word clouds based on the document-term matrices for each of the languages. To avoid over-cluttering the wordcloud, we only include the `r (1 - included_term_frequency)*100`% of terms that appear most often in that language, with a maximum of `r max_terms`.
 
 ```{r wordcloud-eng, fig.cap= "Wordcloud for the English Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "English",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_English.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
 ```{r wordcloud-he, fig.cap= "Wordcloud for the Hebrew Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Hebrew",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Hebrew.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
 ```{r wordcloud-ar, fig.cap= "Wordcloud for the Arabic Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Arabic",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Arabic.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
 ```{r wordcloud-du, fig.cap= "Wordcloud for the Dutch Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Dutch",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Dutch.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
 ```{r wordcloud-fr, fig.cap= "Wordcloud for the French Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "French",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_French.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
 ```{r wordcloud-de, fig.cap= "Wordcloud for the German Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "German",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_German.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+
 ```
 
 ```{r wordcloud-it, fig.cap= "Wordcloud for the Italian Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Italian",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Italian.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+
 ```
 
 ```{r wordcloud-sp, fig.cap= "Wordcloud for the Spanish Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Spanish",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Spanish.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+
 ```
 
 ```{r wordcloud-chi, fig.cap= "Wordcloud for the Chinese Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Chinese",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Chinese.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+
 ```
 
 ```{r wordcloud-ru, fig.cap= "Wordcloud for the Russian Wikipedia pages.", warning = FALSE, message = FALSE}
@@ -700,9 +867,10 @@ create_wordcloud(lang = "Russian",
 ```
 
 ```{r wordcloud-fa, fig.cap= "Wordcloud for the Persian Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Persian",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Persian.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
+
 ```
 
 
