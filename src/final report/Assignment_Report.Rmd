@@ -97,6 +97,8 @@ knitr::include_graphics(
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
+In addition to the main resesarch question, we also conduct additional experiments in this study, for example, clustering the English pages based on their similiaries and investigating the difference between the clusters in terms of their top keywords. 
+
 ## Literature review
 
 Research in sentiment analysis has mainly been used for determining
@@ -181,6 +183,8 @@ The methodology to answer the research question are as follows:
     in the NLP group at Stanford.
 
 3.  A detailed look at the sentiments over time in the different languages.
+
+Besides the above methodologies for investigating our main reseearch question, we also used state-of-the-art natural language processing techniques such as word embeddings, unsupervised machine learning methods such as K means clustering and PCA analysis in our additional experiment - the purpose of which was to cluster the articles based on their similarities. 
 
 # Results
 
