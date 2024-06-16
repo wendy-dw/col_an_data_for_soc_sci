@@ -97,7 +97,10 @@ knitr::include_graphics(
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
-In addition to the main resesarch question, we also conduct additional experiments in this study, for example, clustering the English pages based on their similiaries and investigating the difference between the clusters in terms of their top keywords. 
+In addition to the main resesarch question, we also conduct additional
+experiments in this study, for example, clustering the English pages
+based on their similiaries and investigating the difference between the
+clusters in terms of their top keywords.
 
 ## Literature review
 
@@ -178,13 +181,19 @@ The methodology to answer the research question are as follows:
     wikipedia pages in different languages, we need a tool that is able
     to perform sentiment analysis in different languages. The
     [\underline{Syuzhet}](https://cran.r-project.org/web/packages/syuzhet/vignettes/syuzhet-vignette.html)
-    package currently supports many languages. The package includes four sentiment
-    dictionaries and has a sentiment extraction tool that was developed
-    in the NLP group at Stanford.
+    package currently supports many languages. The package includes four
+    sentiment dictionaries and has a sentiment extraction tool that was
+    developed in the NLP group at Stanford.
 
-3.  A detailed look at the sentiments over time in the different languages.
+3.  A detailed look at the sentiments over time in the different
+    languages.
 
-Besides the above methodologies for investigating our main reseearch question, we also used state-of-the-art natural language processing techniques such as word embeddings, unsupervised machine learning methods such as K means clustering and PCA analysis in our additional experiment - the purpose of which was to cluster the articles based on their similarities. 
+Besides the above methodologies for investigating our main reseearch
+question, we also used state-of-the-art natural language processing
+techniques such as word embeddings, unsupervised machine learning
+methods such as K means clustering and PCA analysis in our additional
+experiment - the purpose of which was to cluster the articles based on
+their similarities.
 
 # Results
 
@@ -360,7 +369,8 @@ times these appear in the text (Table \@ref(tab:filter-keywords)). The
 keywords are translated in all languages using the *deeplr* package
 which allows us to translate up to 500,000 characters per month with a
 free DeepL account. The package did not support Persian, Arab, and
-Hebrew so those languages were translated manually, using google translate.
+Hebrew so those languages were translated manually, using google
+translate.
 
 ```{r eval = !file.exists(find_root_file("data", "filtering_keywords.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #--------------------------Filtering relevant web pages------------------------#
@@ -738,11 +748,11 @@ load(find_root_file("data", "dtm.Rdata",
 ## Sentiment analysis per page
 
 Figure \@ref(fig:hist-sentiment) shows the sentiment score for each of
-the languages. Although the *syuzhet* package provides support for sentiment
-detection in several languages by using the expanded NRC lexicon from
-Saif Mohammed, languages that use non-Latin character sets are not yet
-implemented in the current release which can be seen in the histogram
-since almost all scores are equal to zero in those languages.
+the languages. Although the *syuzhet* package provides support for
+sentiment detection in several languages by using the expanded NRC
+lexicon from Saif Mohammed, languages that use non-Latin character sets
+are not yet implemented in the current release which can be seen in the
+histogram since almost all scores are equal to zero in those languages.
 
 ```{r cache = TRUE, warning = FALSE, message = FALSE}
 # sentiment analysis for each page (language independent)
@@ -843,18 +853,18 @@ We can also visualize the sentiment categories as predicted by the
 syuzhet package, using the NRC sentiment dictionary. This calculates the
 presence of eight emotions in the texts. Figure \@ref(fig:nrc-posneg),
 \@ref(fig:nrc-by-cat), and \@ref(fig:nrc-avg-sent) show the results of
-this analysis. Figure \@ref(fig:nrc-posneg) shows that English has
-both the highest mean score for positive and negative sentiment,
-followed by French, German and Dutch. Figure \@ref(fig:nrc-by-cat)
-breaks down sentiment in 7 emotions categories that are part of the
-*syuzhet* package: anticipation, disgust, fear, joy, sadness, surprise
-and trust. Figure \@ref(fig:nrc-avg-sent) compares the average *emotion*
-categories within each language, this allows us to draw interesting
-conclusions. Trust seems to the most common emotional category for all,
-but this seems to be the only similarity between the languages. The
-'Fear' sentiment seems to be comparatively high for Dutch, English,
-French and German. 'Sadness' seems to be comparatively high for Russian,
-and 'Joy' seems to be high for Hebrew.
+this analysis. Figure \@ref(fig:nrc-posneg) shows that English has both
+the highest mean score for positive and negative sentiment, followed by
+French, German and Dutch. Figure \@ref(fig:nrc-by-cat) breaks down
+sentiment in 7 emotions categories that are part of the *syuzhet*
+package: anticipation, disgust, fear, joy, sadness, surprise and trust.
+Figure \@ref(fig:nrc-avg-sent) compares the average *emotion* categories
+within each language, this allows us to draw interesting conclusions.
+Trust seems to the most common emotional category for all, but this
+seems to be the only similarity between the languages. The 'Fear'
+sentiment seems to be comparatively high for Dutch, English, French and
+German. 'Sadness' seems to be comparatively high for Russian, and 'Joy'
+seems to be high for Hebrew.
 
 ```{r nrc-posneg, cache = TRUE, fig.cap = "Positive and Negative Sentiment of Langauges.", warning = FALSE, message = FALSE}
 nrc_data <- content_filtered %>%
@@ -937,9 +947,38 @@ ggplot(sentiment_summary_long,
 
 ## Clustering based on word embeddings and PCA
 
-Another experimentation we did was to cluster the articles based on their similarities, with the focus on English pages. This is based on the assumption that some pages are more similar in content to each other, and we were interested in understanding whether it is possible to capture their similarities only based on the word embeddings of the top keywords from the articles. In order to do this, we use the R package *text*. The textEmbed() function gives the pre-trained word embeddings retrieved from Hugging Face transformers language models, which is the state-of-art for natural language processing. The word embedding is a vector that captures the semantic of the words, and similar words have less Euclidean distance with each other.  
+Another experimentation we did was to cluster the articles based on
+their similarities, with the focus on English pages. This is based on
+the assumption that some pages are more similar in content to each
+other, and we were interested in understanding whether it is possible to
+capture their similarities only based on the word embeddings of the top
+keywords from the articles. In order to do this, we use the R package
+*text*. The textEmbed() function gives the pre-trained word embeddings
+retrieved from Hugging Face transformers language models, which is the
+state-of-art for natural language processing. The word embedding is a
+vector that captures the semantic of the words, and similar words have
+less Euclidean distance with each other.
 
-Process wise, we first identify the top 10 keywords from each article. Similarly, cleaning steps such as stopwords removal is important before calculating document term matrix to ensure that we only keep the more meaningful words. Then, we calculate the average embeddding for each article using these keywords. In this way, we obtain an embedding for each article, and this is a compact representation for the semantic meaning of the article. Next we perform K-means clustering for all English pages where K is chosen to be 3. For visualization of the clusters, we also performed PCA, such that the PCA scores for each page as well as the cluster each page belongs to can be shown in two dimensions, as in Figure \@ref(fig:embedding-analysis-english). To see how the different clusters may be related to different types of contents, we then extract top 10 keywords and their frequencies for each cluster, and visualize this in Figure \@ref(fig:visualize-top-keywords-cluster). As we see, cluster 1 contains high-frequency words such as "gaza" and "war", which are missing from the second and third cluster. This implies that cluster 1 represents more of the Gaza–Israel conflict, a localized part of the Israeli–Palestinian conflict, whereas cluster 2 and 3 are more about the Israeli–Palestinian conflict in general.
+Process wise, we first identify the top 10 keywords from each article.
+Similarly, cleaning steps such as stopwords removal is important before
+calculating document term matrix to ensure that we only keep the more
+meaningful words. Then, we calculate the average embedding for each
+article using these keywords. In this way, we obtain an embedding for
+each article, and this is a compact representation for the semantic
+meaning of the article. Next we perform K-means clustering for all
+English pages where K is chosen to be 3. For visualization of the
+clusters, we also performed PCA, such that the PCA scores for each page
+as well as the cluster each page belongs to can be shown in two
+dimensions, as in Figure \@ref(fig:embedding-analysis-english). To see
+how the different clusters may be related to different types of
+contents, we then extract top 10 keywords and their frequencies for each
+cluster, and visualize this in Figure
+\@ref(fig:visualize-top-keywords-cluster). As we see, cluster 1 contains
+high-frequency words such as "gaza" and "war", which are missing from
+the second and third cluster. This implies that cluster 1 represents
+more of the Gaza–Israel conflict, a localized part of the
+Israeli–Palestinian conflict, whereas cluster 2 and 3 are more about the
+Israeli–Palestinian conflict in general.
 
 ```{r embedding-analysis-english, cache = TRUE, fig.cap = "Clustering/PCA on the embeddings.", warning = FALSE, message = FALSE}
 
@@ -1074,8 +1113,8 @@ score. However, German and French seems to skew a bit to the negative
 sentiment side. When looking at the sentiment score over time, German
 seems to be the main outlier with a very negative score in 2012, which
 slowly became positive the years following. There was no clear effect in
-any language for sentiment after the start of the Israel-Hamas conflict in
-October 2023. When looking at emotional categories within sentiment,
+any language for sentiment after the start of the Israel-Hamas conflict
+in October 2023. When looking at emotional categories within sentiment,
 German seems to have a high mean sentiment score for 'Fear'; Hebrew for
 'Joy' and Russian for 'Sadness'. However, it is important to add that
 these results have to be combined with further research and manual
@@ -1087,16 +1126,24 @@ package. This has not allowed us to analyse these languages or interpret
 their results correctly. Another limitation of the analysis is that we
 do not speak all the languages used in this dataset, this has resulted
 in us not being able to pre-process the webscraped data to the best of
-its abilities. However, as far as we are aware, this is a
-first attempt at compiling a big exploratory study comparing sentiment
-across languages on Wikipedia using NLP.
+its abilities. However, as far as we are aware, this is a first attempt
+at compiling a big exploratory study comparing sentiment across
+languages on Wikipedia using NLP.
 
-In terms of the clustering on the articles, we saw that there is some limitation within our current analysis, as most of the keywords in different clusters overlap with one another. For future studies in this direction, one may play around with parameters such as different number of keywords to use for averaging word embeddings in each artile, or different number of clusters. One may also explore alternative approaches for a richer semantic representation of the article, other than just simply averaging the word embeddings from the keywords.
+In terms of the clustering on the articles, we saw that there is some
+limitation within our current analysis, as most of the keywords in
+different clusters overlap with one another. However, this is to be
+expected, as we focused on the conflict in a very general sense. For
+future studies in this direction, one may play around with parameters
+such as different number of keywords to use for averaging word
+embeddings in each article, or different number of clusters. Another
+avenue is to explore alternative approaches for a richer semantic
+representation of the article, other than just simply averaging the word
+embeddings from the keywords.
 
 \clearpage
 
 \appendix
-
 
 # Appendix
 
@@ -1148,10 +1195,11 @@ terms that appear most often in that language, with a maximum of
 `r max_terms`.
 
 The word clouds reveal a couple of interesting shortcomings in the text
-pre-processing. Firstly, stopword removal did not work well for French since
-article words like "les" and "des" were not removed properly. Chinese was not
-processed well either since the word cloud mainly shows a couple of English
-words and some Chinese "words" are suspiciously long.
+pre-processing. Firstly, stopword removal did not work well for French
+since article words like "les" and "des" were not removed properly.
+Chinese was not processed well either since the word cloud mainly shows
+a couple of English words and some Chinese "words" are suspiciously
+long.
 
 ```{r wordcloud-eng, fig.cap= "Wordcloud for the English Wikipedia pages.", warning = FALSE, message = FALSE}
 knitr::include_graphics(
