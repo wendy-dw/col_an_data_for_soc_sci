@@ -146,13 +146,13 @@ more than 300 languages (@wikipedia-list). The encyclopedia is committed
 to what it calls a “Neutral Point of View” (NPOV), which is defined as
 representing proportionately, fairly, and as far as possible without
 bias. The automatic identification of POV is of high potential for
-content analysis in social sciences (al2012automatic). However,
+content analysis in social sciences [@al2012automatic]. However,
 researchers have raised doubts about Wikipedia’s neutrality, that people
 of different language backgrounds share different sources of information
 and cultures. These differences have reflected on the type of
-information covered (@zhou2015wikipedia). Additionally, Wikipedia
+information covered [@zhou2015wikipedia]. Additionally, Wikipedia
 webpages allow opinions, as long as they come for reliable authors
-(@wikipedia-reliable-sources)
+[@wikipedia-reliable-sources].
 
 # Methodology
 
@@ -173,18 +173,11 @@ The methodology to answer the research question are as follows:
     wikipedia pages in different languages, we need a tool that is able
     to perform sentiment analysis in different languages. The
     [\underline{Syuzhet}](https://cran.r-project.org/web/packages/syuzhet/vignettes/syuzhet-vignette.html)
-    package currently supports many languages, among which there are
-    Arabic, Chinese, Dutch, English, French, German, Hebrew, Italian,
-    Persian, Russian, and Spanish.The package includes four sentiment
+    package currently supports many languages. The package includes four sentiment
     dictionaries and has a sentiment extraction tool that was developed
     in the NLP group at Stanford.
 
-3.  A statistical analysis: It is yet unclear which statistical analysis
-    will fit best to answer our main research questions pertaining to
-    the difference in sentiment/opinion on the Israeli-Palestinian
-    conflict, depending on the language of the documents. Finding
-    clusters of languages with similar sentiments seems like a sensible
-    route for now.
+3.  A detailed look at the sentiments over time in the different languages.
 
 # Results
 
@@ -195,7 +188,7 @@ However, to efficiently run the notebook, we store and share all
 web-scraped information on GitHub. This data, if available on your local
 machine (pull the repository to get it), will be loaded from your hard
 drive into your R environment in stead of being re-created from scratch.
-This will save a significant amount of time.
+This will save a significant amount of time when going through the code.
 
 The web scraping starts from **one** Wikipedia page for each language.
 Starting from the English version of "Israeli-Palestinian conflict" page
@@ -360,7 +353,7 @@ times these appear in the text (Table \@ref(tab:filter-keywords)). The
 keywords are translated in all languages using the *deeplr* package
 which allows us to translate up to 500,000 characters per month with a
 free DeepL account. The package did not support Persian, Arab, and
-Hebrew so those languages were translated using google translate.
+Hebrew so those languages were translated manually, using google translate.
 
 ```{r eval = !file.exists(find_root_file("data", "filtering_keywords.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #--------------------------Filtering relevant web pages------------------------#
@@ -615,7 +608,7 @@ the left). To correct for the length of a web page, we divide this total
 by the number of characters in the web page (see the Figure
 \@ref(fig:total-keywords) on the right).
 
-In over 15% of the web pages, any of the keywords appear. These web
+In over 15% of the web pages, none of the keywords appear. These web
 pages are for sure irrelevant. Since we only want to keep web pages that
 are relevant for our topic of interest, we will only keep web pages
 where any of the keywords appear at least 5 times and the total keyword
@@ -631,7 +624,7 @@ pages. Native speakers could tell us that, since Iran does not recognise
 Israel as a country, they call it "zionist regime",رژیم صهیونیستی , or
 "occupied Palestine", فلسطین اشغالی in stead. Since "zionist regime" had
 the most hits, we used that term in stead but it still yielded far less
-matches than the term Israel got in any other language.
+matches than the term "Israel" got in any other language.
 
 ```{r keep-per-language, fig.cap = "Number of web pages that are filtered out for each of the languages in absolute numbers (left) and in percentages (right)."}
 #plot how many web pages remain after filtering, per language
@@ -738,7 +731,7 @@ load(find_root_file("data", "dtm.Rdata",
 ## Sentiment analysis per page
 
 Figure \@ref(fig:hist-sentiment) shows the sentiment score for each of
-the languages. Although the *syuzhet* provides support for sentiment
+the languages. Although the *syuzhet* package provides support for sentiment
 detection in several languages by using the expanded NRC lexicon from
 Saif Mohammed, languages that use non-Latin character sets are not yet
 implemented in the current release which can be seen in the histogram
@@ -843,17 +836,17 @@ We can also visualize the sentiment categories as predicted by the
 syuzhet package, using the NRC sentiment dictionary. This calculates the
 presence of eight emotions in the texts. Figure \@ref(fig:nrc-posneg),
 \@ref(fig:nrc-by-cat), and \@ref(fig:nrc-avg-sent) show the results of
-this analysis. Figure \@ref(fig:nrc-posneg) shows that English shows
+this analysis. Figure \@ref(fig:nrc-posneg) shows that English has
 both the highest mean score for positive and negative sentiment,
 followed by French, German and Dutch. Figure \@ref(fig:nrc-by-cat)
 breaks down sentiment in 7 emotions categories that are part of the
 *syuzhet* package: anticipation, disgust, fear, joy, sadness, surprise
 and trust. Figure \@ref(fig:nrc-avg-sent) compares the average *emotion*
 categories within each language, this allows us to draw interesting
-conclusions. Trust seems to the most common emotional category for all ,
+conclusions. Trust seems to the most common emotional category for all,
 but this seems to be the only similarity between the languages. The
 'Fear' sentiment seems to be comparatively high for Dutch, English,
-French and German. 'Sadness' seems to be comparetively high for Russian,
+French and German. 'Sadness' seems to be comparatively high for Russian,
 and 'Joy' seems to be high for Hebrew.
 
 ```{r nrc-posneg, cache = TRUE, fig.cap = "Positive and Negative Sentiment of Langauges.", warning = FALSE, message = FALSE}
@@ -935,6 +928,8 @@ ggplot(sentiment_summary_long,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+\clearpage
+
 # Discussion
 
 In this analysis, the differences in sentiment in Wikipedia articles on
@@ -946,7 +941,7 @@ score. However, German and French seems to skew a bit to the negative
 sentiment side. When looking at the sentiment score over time, German
 seems to be the main outlier with a very negative score in 2012, which
 slowly became positive the years following. There was no clear effect in
-any language for sentiment after the start of the Israel-Hamas was in
+any language for sentiment after the start of the Israel-Hamas conflict in
 October 2023. When looking at emotional categories within sentiment,
 German seems to have a high mean sentiment score for 'Fear'; Hebrew for
 'Joy' and Russian for 'Sadness'. However, it is important to add that
@@ -966,6 +961,7 @@ across languages on Wikipedia using NLP.
 \clearpage
 
 \appendix
+
 
 # Appendix
 
@@ -1002,9 +998,9 @@ if (!file.exists(find_root_file("wordcloud_Dutch.pdf",
     p <- create_wordcloud(lang = lang,
                    included_term_frequency = included_term_frequency,
                    max_terms = max_terms)
-    saveWidget(p,"tmp.html",selfcontained = F)
+    saveWidget(p, "tmp.html", selfcontained = F)
     webshot("tmp.html",
-            sprintf("wordcloud_%s.pdf",lang),
+            sprintf("wordcloud_%s.pdf", lang),
             delay = 5, vwidth = 480, vheight = 480)
   }
 }
@@ -1015,6 +1011,12 @@ matrices for each of the languages. To avoid over-cluttering the
 wordcloud, we only include the `r (1 - included_term_frequency)*100`% of
 terms that appear most often in that language, with a maximum of
 `r max_terms`.
+
+The word clouds reveal a couple of interesting shortcomings in the text
+pre-processing. Firstly, stopword removal did not work well for French since
+article words like "les" and "des" were not removed properly. Chinese was not
+processed well either since the word cloud mainly shows a couple of English
+words and some Chinese "words" are suspiciously long.
 
 ```{r wordcloud-eng, fig.cap= "Wordcloud for the English Wikipedia pages.", warning = FALSE, message = FALSE}
 knitr::include_graphics(
@@ -1075,9 +1077,9 @@ knitr::include_graphics(
 ```
 
 ```{r wordcloud-ru, fig.cap= "Wordcloud for the Russian Wikipedia pages.", warning = FALSE, message = FALSE}
-create_wordcloud(lang = "Russian",
-                 included_term_frequency = included_term_frequency,
-                 max_terms = max_terms)
+knitr::include_graphics(
+  find_root_file("wordcloud_Russian.pdf",
+                 criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
 ```{r wordcloud-fa, fig.cap= "Wordcloud for the Persian Wikipedia pages.", warning = FALSE, message = FALSE}
@@ -1086,6 +1088,8 @@ knitr::include_graphics(
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 
 ```
+
+\clearpage
 
 ## All code for this report
 
