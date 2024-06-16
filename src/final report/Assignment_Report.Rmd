@@ -33,6 +33,8 @@ library(tidytext)
 library(webdriver)
 library(rvest)
 library(furrr)           #process in parallel
+library(ggplot2)  
+library(plotly)
 
 #packages for languages
 library(deeplr)          #for easy translations from R
@@ -41,6 +43,7 @@ library(tokenizers)      #for tokenization
 library(tm)              #text mining in R
 library(wordcloud2)       #to create a word cloud
 library(syuzhet)         #for multi-lingual sentiment analysis
+library(text)   # for word embeddings 
 
 #load custom functions
 source(find_root_file("src", "final report", "helperfunctions.R",
@@ -928,6 +931,126 @@ ggplot(sentiment_summary_long,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+```{r embedding-analysis-english, cache = TRUE, fig.cap = "Clustering/PCA on the embeddings.", warning = FALSE, message = FALSE}
+
+library(ggplot2)  # For visualization (optional)
+library(text)
+
+# Define the function to get the top 10 keywords used for the embedding
+keyWords <- function(text) {
+  corpus <- Corpus(VectorSource(text))
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  corpus <- tm_map(corpus, removePunctuation)
+  corpus <- tm_map(corpus, removeNumbers)
+  corpus <- tm_map(corpus, removeWords, stopwords("english"))
+  corpus <- tm_map(corpus, stemDocument)
+  corpus <- tm_map(corpus, stripWhitespace)
+  dtm <- DocumentTermMatrix(corpus)
+  dtm_matrix <- as.matrix(dtm)
+  term_freq <- colSums(dtm_matrix)
+  top_terms_freq <- sort(term_freq, decreasing = TRUE)
+  top_keywords_freq <- names(top_terms_freq)[1:10]
+  return(top_keywords_freq)
+}
+
+# Define the function to calculate the average embedding for each article based on 10 keywords
+aveEmbedding <- function(keywords) {
+  E <- textEmbed(keywords)
+  return(colMeans(E$texts$texts))
+}
+
+# Calculate the average embeddings and save into df
+# K <- keyWords(filtered_data$page_content[1])
+# E = aveEmbedding(K)
+
+# embedding_vectors <- list()
+# for (i in 1:nrow(filtered_data)) {
+#  K <- keyWords(filtered_data$page_content[i])
+#  E = aveEmbedding(K)
+#  embedding_vectors <- c(embedding_vectors, list(E))
+#}
+
+# df <- do.call(data.frame, embedding_vectors)
+# df <- t(df)
+# write.csv(df, "embedding_data.csv", row.names = FALSE)
+
+# The codes to generate embeddings are very computationally heavy, so we read directly what's been generated before
+df <- read.csv('embedding_data.csv')
+
+# Perform k-means clustering
+num_clusters <- 3  
+kmeans_model <- kmeans(df, centers = num_clusters)
+pca_result <- prcomp(df, center = TRUE, scale. = TRUE)
+
+# Get the principal component scores
+pca_scores <- pca_result$x[, 1:2]
+# Create a data frame combining PCA scores and cluster assignments
+pca_data <- data.frame(PC1 = pca_scores[, 1], PC2 = pca_scores[, 2], Cluster = as.factor(kmeans_model$cluster))
+
+# Plot using ggplot2
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Cluster)) +
+  geom_point() +
+  labs(title = "PCA Plot after K-Means Clustering",
+       x = "Principal Component 1", y = "Principal Component 2", z = "Principal Component 3") +
+  scale_color_discrete(name = "Cluster")
+
+```
+
+```{r visualize-top-keywords-cluster, cache = TRUE, fig.cap = "Word frequencies across clusters.", warning = FALSE, message = FALSE}
+
+filtered_data$Cluster <- kmeans_model$cluster
+# Select data for each cluster
+cluster_1_data <- filtered_data[filtered_data$Cluster == 1, ]
+cluster_2_data <- filtered_data[filtered_data$Cluster == 2, ]
+cluster_3_data <- filtered_data[filtered_data$Cluster == 3, ]
+
+keyWords20_frequency <- function(text) {
+  corpus <- Corpus(VectorSource(text))
+  
+  corpus <- tm_map(corpus, content_transformer(tolower))
+  corpus <- tm_map(corpus, removePunctuation)
+  corpus <- tm_map(corpus, removeNumbers)
+  corpus <- tm_map(corpus, removeWords, stopwords("english"))
+  corpus <- tm_map(corpus, stemDocument)
+  corpus <- tm_map(corpus, stripWhitespace)
+  
+  dtm <- DocumentTermMatrix(corpus)
+  dtm_matrix <- as.matrix(dtm)
+  term_freq <- colSums(dtm_matrix)
+  top_terms_freq <- sort(term_freq, decreasing = TRUE)
+  top_keywords_freq <- names(top_terms_freq)[1:10]
+  top_freq <- top_terms_freq[1:10]
+  return(list(top_keywords_freq,top_freq))
+}
+
+K1 = keyWords20_frequency(cluster_1_data$page_content)
+K2 = keyWords20_frequency(cluster_2_data$page_content)
+K3 = keyWords20_frequency(cluster_3_data$page_content)
+
+elements1 <- unlist(K1[1])
+freq1 <- unlist(K1[2])
+
+elements2 <- unlist(K2[1])
+freq2 <- unlist(K2[2])
+
+elements3 <- unlist(K3[1])
+freq3 <- unlist(K3[2])
+
+par(mfrow = c(1, 3))
+barplot(freq1, names.arg = elements1, col = "skyblue",
+        main = "Cluster 1",
+        xlab = "", ylab = "Frequency", las = 2)
+
+barplot(freq2, names.arg = elements2, col = "skyblue",
+        main = "Cluster 2",
+        xlab = "", ylab = "Frequency", las = 2)
+
+barplot(freq3, names.arg = elements3, col = "skyblue",
+        main = "Cluster 3",
+        xlab = "", ylab = "Frequency", las = 2)
+
+```
+
 \clearpage
 
 # Discussion
@@ -954,9 +1077,11 @@ package. This has not allowed us to analyse these languages or interpret
 their results correctly. Another limitation of the analysis is that we
 do not speak all the languages used in this dataset, this has resulted
 in us not being able to pre-process the webscraped data to the best of
-its abilities. However, to conclude, as far as we are aware, this is a
+its abilities. However, as far as we are aware, this is a
 first attempt at compiling a big exploratory study comparing sentiment
 across languages on Wikipedia using NLP.
+
+Another experimentation we did was to cluster the articiles based on their similarities, with the focus on English pages. This is based on the assumption that some pages are more similar in content to each other, and we were interested in understanding whether it is possible to capture their similaries only based on the word embeddings of the top keywords from the articles. In order to do this, we use the R package *text*. The textEmbed() function gives the pre-trained word embeddings retrieved from Hugging Face transformers language models, which is the state-of-art for natural language processing. The word embedding is a vector that captures the semantic of the words, and similar words have less Euclidean distance with each other. Process wise, we first identify the top 10 keywords from each article. Similarly, cleaning steps such as stopwords removal is important before calculating document term matrix to ensure that we only keep the more meaningful words. Then, we calculate the average embeddding for each article using these keywords. In this way, we obtain an embedding for each article, and this is a compact representation for the semantic meaning of the artcile. Next we perform K-means clustering for all English pages where K is chosen to be 3. For visualization of the clusters, we also performed PCA, such that the PCA scores for each page as well as the cluster each page belongs to can be shown in two dimensions, as in Figure \@ref(fig:embedding-analysis-english). To see how the different clusters may be related to different types of contents, we then extract top 10 keywords and their frequencies for each cluster, and visualize this in \@ref(fig:visualize-top-keywords-cluster). As we see, cluster 1 contains high-frequency words such as "gaza" and "war", which are missing from the second and third cluster. This implies that cluster 1 represents more of the Gaza–Israel conflict, a localized part of the Israeli–Palestinian conflict, whereas cluster 2 and 3 are more about the Israeli–Palestinian conflict in general. However, we also see that most of the keywords from different clusters overlap with each other. For future studies in this direction, one may play around with the parameters such as different number of clusters and different number of keywords. We also speculate that one may use alternative approaches to obtain a richer vector representation of the articles other than simply calculating the mean word embeddings from top keywords.
 
 \clearpage
 
