@@ -57,10 +57,36 @@ options(stringsAsFactors = F)
 
 # Introduction
 
-The Israeli-Palestinian conflict has its origins in the late 19$^{th}$ and early 20$^{th}$ century when Jewish settlers arrived to Ottoman Palestine. In 1947, after the second world war, the United Nations (UN) partition plan officially split Palestine into and Arab state, Jewish state, and Jerusalem. Important aspects of conflict are the Israeli occupation of the West Bank and Gaza strip, Israeli settlements (see also the Figure below), the division of Jerusalem, borders, security and water rights. Over the years, the conflict has escalated to actual wars several times. The UN partition plan led to a lot of violence and, in 1948, the Arab-Israeli war. The six-day war in 1967 and the Yom-Kippur war in 1973 were followed by the first (1987-1993) and second (2000-2005) Intifada. Currently, the conflict is back in the news with an ongoing war between Israel and Hamas. Both parties have their supporters and this research aims to investigate whether a sentiment analysis of Wikipedia pages on the conflict in different languages can unveil underlying positive or negative feelings towards the conflict, Israel and Palestine.
+The Israeli-Palestinian conflict has its origins in the late 19$^{th}$
+and early 20$^{th}$ century when Jewish settlers arrived to Ottoman
+Palestine. In 1947, after the second world war, the United Nations (UN)
+partition plan officially split Palestine into and Arab state, Jewish
+state, and Jerusalem. Important aspects of conflict are the Israeli
+occupation of the West Bank and Gaza strip, Israeli settlements (see
+also the Figure below), the division of Jerusalem, borders, security and
+water rights. Over the years, the conflict has escalated to actual wars
+several times. The UN partition plan led to a lot of violence and, in
+1948, the Arab-Israeli war. The six-day war in 1967 and the Yom-Kippur
+war in 1973 were followed by the first (1987-1993) and second
+(2000-2005) Intifada (@caplan2019). Currently, the conflict is back in
+the news with an ongoing war between Israel and Hamas. This increase in
+global attention inevitably causes the general population to inform
+themselves about the conflict online, often on Wikipedia. Wikipedia
+pages are typically written by a community of interested and motivated
+volunteers. However, pages on the most popular/important topics
+typically exist in many different languages and the content may differ
+quite substantially, depending on the language.
 
-Wikipedia pages are typically written by a community of interested and motivated volunteers. Pages on the most popular/important topics typically exist in many different languages and the content may differ quite substantially, depending on the language. They are typically not a literal translation from one language to the other but are typically written by speakers of the language with some knowledge on the topic at hand. We will focus on the languages spoken by Israeli (Hebrew), the Palestinians (Arabic), some "Western" languages (English, Dutch, French, German, Italian, Spanish) and some Eastern languages (Chinese, Russian, Persian).
-
+Therefore, the research question for this analysis reads as follows:
+“Are there differences in sentiment in how Wikipedia articles in
+different languages describe the Israel-Palestine conflict?” This
+research aims to conduct an explanatory study to see whether a sentiment
+analysis of Wikipedia pages on the conflict in different languages can
+unveil underlying patterns. The analysis is performed by carrying out a
+sentiment analysis on translated web-scraped Wikipedia articles of 11
+languages that are spoken by relevant global actors: Hebrew, Arabic,
+English, Dutch, French, German, Italian, Spanish, Chinese, Russian and
+Persian.
 
 ```{r territory, echo=FALSE, fig.cap= "Division of Palestinian and Israeli territory over the years (source: https://yalibnan.com/2014/06/27/eu-warns-business-israeli-settlements/)", out.width = "15cm"}
 knitr::include_graphics(
@@ -70,30 +96,114 @@ knitr::include_graphics(
 
 ## Literature review
 
-The Israeli-Palestinian conflict has been analysed using sentiment analysis before. In this section, we refer to some inspiring examples. 
+Research in sentiment analysis has mainly been used for determining
+sentiment of opinion in online reviews. Recently, researchers have
+looked into mining opinion in text from news articles and blogs
+(@tripathi2015sentiment). Data mining and text mining techniques are
+needed to analyze people’s attitudes and emotions towards specific
+topics. However, finding (political) bias in published text is a
+complicated problem due to the huge text corpus of articles
+(@Gupta2009FindingBI). In content analysis today, positive and negative
+representation of topics are often coded manually. These approaches do
+not share a research methodology due to the problem that there cannot be
+an objective standard of what constitutes neutrality (@al2012automatic).
+This is why sentiment analysis has become a major area of research in
+the field of Natural Language Processing (NLP) and aims to determine the
+attitude of a writer with respect to a specific topic
+(@Kaya2012sentiment).
 
-The documents on which the sentiment analysis is applied differs over different research articles.  Twitter has likely been the most popular choice [@al2019multi; @imtiaz2022taking; @matalon2021using; @ramdhani2023sentiment; @abusheikh2023digital] but web scraping from Twitter's successor, X, has become very hard so we looked for alternatives.
-@al2018bias identify patterns in the press orientation and further in the media bias towards either the Palestinian or Israeli side from press reports and articles.
-Similarly, @alsubari2024online base their research on news channel streams to assess channel and user engagement. 
+There are three different levels of granularity to address the problem
+of a sentiment analysis: sentence-level, article-level and concept-level
+sentiment analysis. A common level is the sentence level, where each
+sentence has only one target concept. Article-level sentiment analysis
+only targets one concept in a whole article. The concept-level sentiment
+analysis includes multiple sentences about the same concept, or once
+sentence that contains sentiments towards different concepts. There are
+two approaches to extract concepts: manually create a list of
+interesting objects before the analysis or to extract concepts from the
+content automatically (@zhou2015wikipedia). For this research, Wikipedia
+articles with key words regarding the Israel-Palestine conflict were
+manually selected, then the sentiment score per article level were
+determined.
 
-Other examples where opinions are compared in different languages are @abusheikh2023digital and @al2012automatic. The latter is of particular interest since they also base their research on wikipedia pages. 
+The documents on which previous sentiment analysis has been applied
+differs across research articles. Twitter has likely been the most
+popular choice [@al2019multi; @imtiaz2022taking; @matalon2021using;
+@ramdhani2023sentiment; @abusheikh2023digital] but web scraping from
+Twitter's successor, X, has become very difficult, so alternatives had
+to be considered. @al2018bias identified patterns in the press
+orientation and further in the media bias towards either the Palestinian
+or Israeli side from press reports and articles. Similarly,
+@alsubari2024online based their research on news channel streams to
+assess channel and user engagement. Other examples where opinions are
+compared in different languages are @abusheikh2023digital and
+@al2012automatic. The latter is of particular interest since they also
+based their research on Wikipedia articles.
+
+Wikipedia is the most widely used encyclopedia in collaborative
+knowledge building, it contains more than 60 million articles and has
+more than 300 languages (@wikipedia-list). The encyclopedia is committed
+to what it calls a “Neutral Point of View” (NPOV), which is defined as
+representing proportionately, fairly, and as far as possible without
+bias. The automatic identification of POV is of high potential for
+content analysis in social sciences (al2012automatic). However,
+researchers have raised doubts about Wikipedia’s neutrality, that people
+of different language backgrounds share different sources of information
+and cultures. These differences have reflected on the type of
+information covered (@zhou2015wikipedia). Additionally, Wikipedia
+webpages allow opinions, as long as they come for reliable authors
+(@wikipedia-reliable-sources)
 
 # Methodology
 
-We plan to follow the following steps:
+The methodology to answer the research question are as follows:
 
-1. Web scraping and web crawling: The automated download of HTML pages is called **Crawling**. The extraction of the textual data and/or metadata (for example, article date, headlines, author names, article text) from the HTML source code is called **Scraping**. We plan to use he R package [\underline{rvest}](https://cran.r-project.org/web/packages/rvest/index.html) for this task, inspired by two tutorials in particular [\underline{here}](https://ghanadatastuff.com/post/webscraping_wikipedia/) and [\underline{here}](https://github.com/tm4ss/tm4ss.github.io/blob/master/Tutorial_1_Web_scraping.Rmd). 
-2. Sentiment analysis: Since we want to compare the sentiment of wikipedia pages in different languages, we need a tool that is able to perform sentiment analysis in different languages. The [\underline{Syuzhet}](https://cran.r-project.org/web/packages/syuzhet/vignettes/syuzhet-vignette.html) package currently supports many languages, among which there are Arabic, Chinese, Dutch, English, French, German, Hebrew, Italian, Persian, Russian, and Spanish.
-3. A statistical analysis: It is yet unclear which statistical analysis will fit best to answer our main research questions pertaining to the difference in sentiment/opinion on the Israeli-Palestinian conflict, depending on the language of the documents. Finding clusters of languages with similar sentiments seems like a sensible route for now.
+1.  Web scraping and web crawling: The automated download of HTML pages
+    is called **Crawling**. The extraction of the textual data and/or
+    metadata (for example, article date, headlines, author names,
+    article text) from the HTML source code is called **Scraping**. We
+    plan to use he R package
+    [\underline{rvest}](https://cran.r-project.org/web/packages/rvest/index.html)
+    for this task, inspired by two tutorials in particular
+    [\underline{here}](https://ghanadatastuff.com/post/webscraping_wikipedia/)
+    and
+    [\underline{here}](https://github.com/tm4ss/tm4ss.github.io/blob/master/Tutorial_1_Web_scraping.Rmd).
 
+2.  Sentiment analysis: Since we want to compare the sentiment of
+    wikipedia pages in different languages, we need a tool that is able
+    to perform sentiment analysis in different languages. The
+    [\underline{Syuzhet}](https://cran.r-project.org/web/packages/syuzhet/vignettes/syuzhet-vignette.html)
+    package currently supports many languages, among which there are
+    Arabic, Chinese, Dutch, English, French, German, Hebrew, Italian,
+    Persian, Russian, and Spanish.The package includes four sentiment
+    dictionaries and has a sentiment extraction tool that was developed
+    in the NLP group at Stanford.
+
+3.  A statistical analysis: It is yet unclear which statistical analysis
+    will fit best to answer our main research questions pertaining to
+    the difference in sentiment/opinion on the Israeli-Palestinian
+    conflict, depending on the language of the documents. Finding
+    clusters of languages with similar sentiments seems like a sensible
+    route for now.
 
 # Results
 
 ## Web scraping and crawling
 
-We will show all code used to web scrape the relevant Wikipedia pages. However, to efficiently run the notebook, we store and share all web-scraped information on GitHub. This data, if available on your local machine (pull the repository to get it), will be loaded from your hard drive into your R environment in stead of being re-created from scratch. This will save a significant amount of time.
+We will show all code used to web scrape the relevant Wikipedia pages.
+However, to efficiently run the notebook, we store and share all
+web-scraped information on GitHub. This data, if available on your local
+machine (pull the repository to get it), will be loaded from your hard
+drive into your R environment in stead of being re-created from scratch.
+This will save a significant amount of time.
 
-The web scraping starts from **one** Wikipedia page for each language. Starting from the English version of "Israeli-Palestinian conflict" page ([here](https://en.wikipedia.org/wiki/Israeli%E2%80%93Palestinian_conflict)), we manually get the link to all other 10 languages of interest for this page. Starting from these 11 URLs, we get all links to other Wikipedia pages in the same language that are accessible from the "Israeli-Palestinian conflict" page. 
+The web scraping starts from **one** Wikipedia page for each language.
+Starting from the English version of "Israeli-Palestinian conflict" page
+([here](https://en.wikipedia.org/wiki/Israeli%E2%80%93Palestinian_conflict)),
+we manually get the link to all other 10 languages of interest for this
+page. Starting from these 11 URLs, we get all links to other Wikipedia
+pages in the same language that are accessible from the
+"Israeli-Palestinian conflict" page.
 
 ```{r webscraping-geturls, echo = FALSE, eval = !file.exists(find_root_file("data", "all_urls.yml", criterion =  has_file("col_an_data_for_soc_sci.Rproj")))}
 #-------------------------------webscraping------------------------------------#
@@ -147,9 +257,18 @@ links <- read_vc(
                           has_file("col_an_data_for_soc_sci.Rproj"))) %>%
   mutate(language = as.factor(language),
          language_short = as.factor(language_short))
-``` 
+```
 
-In total, this search yields `r nrow(links)` URLs for all 11 languages. Figure \@ref(fig:nb-urls) shows the number of linked Wikipedia pages for each of the languages on the left. For comparison, we show the number of (native) speaker on the right since the number of Wikipedia pages will depend a lot on the number of speakers who can write the pages. Taking both into account, we can see that Arabic and English have the most Wikipedia pages linked to the "Israeli-Palestinian conflict" page. Arabic and Hebrew, logically, have much more Wikipedia pages on the issue than what would be expected, given their lower number of native speakers.   
+In total, this search yields `r nrow(links)` URLs for all 11 languages.
+Figure \@ref(fig:nb-urls) shows the number of linked Wikipedia pages for
+each of the languages on the left. For comparison, we show the number of
+(native) speaker on the right since the number of Wikipedia pages will
+depend a lot on the number of speakers who can write the pages. Taking
+both into account, we can see that Arabic and English have the most
+Wikipedia pages linked to the "Israeli-Palestinian conflict" page.
+Arabic and Hebrew, logically, have much more Wikipedia pages on the
+issue than what would be expected, given their lower number of native
+speakers.
 
 ```{r nb-urls, fig.cap = "Number of URLs per language on the left and the number of (native) speakers on the right.", warning = FALSE, message = FALSE}
 #--------------------------plot number of urls per language--------------------#
@@ -190,7 +309,8 @@ p1 + p2
   
 ```
 
-For each of these links, we get the page title, the body of text, and the dates that the page was first published and last edited.
+For each of these links, we get the page title, the body of text, and
+the dates that the page was first published and last edited.
 
 ```{r webscraping-get-url-content, eval = !file.exists(find_root_file("data", "content.parquet", criterion =     has_file("col_an_data_for_soc_sci.Rproj")))}
 #----------------------------webscrape all website content---------------------#
@@ -218,7 +338,6 @@ if (!file.exists(
 }
 ```
 
-
 ```{r webscraping-load-url-content, eval = file.exists(find_root_file("data", "content.parquet", criterion =     has_file("col_an_data_for_soc_sci.Rproj")))}
 #load the file locally if it exists
 content <- read_parquet(
@@ -227,14 +346,21 @@ content <- read_parquet(
                    has_file("col_an_data_for_soc_sci.Rproj"))) %>%
   mutate(language = as.factor(language),
          language_short = as.factor(language_short))
-``` 
+```
 
 ## Filtering relevant web pages
 
-Looking at the scraped pages, it is clear that some web pages are not relevant for the Israeli-Palestinian conflict.
-This was to be expected since Wikipedia has the tendency to link to *all* topics for which a Wikipedia page exists.
-Before we start the time-consuming steps of removing stop words and preparing the web pages for language models, we therefore defined a fixed set of 10 keywords and we will count how many times these appear in the text (Table \@ref(tab:filter-keywords)).
-The keywords are translated in all languages using the *deeplr* package which allows us to translate up to 500,000 characters per month with a free DeepL account. The package did not support Persian, Arab, and Hebrew so those languages were translated using google translate.
+Looking at the scraped pages, it is clear that some web pages are not
+relevant for the Israeli-Palestinian conflict. This was to be expected
+since Wikipedia has the tendency to link to *all* topics for which a
+Wikipedia page exists. Before we start the time-consuming steps of
+removing stop words and preparing the web pages for language models, we
+therefore defined a fixed set of 10 keywords and we will count how many
+times these appear in the text (Table \@ref(tab:filter-keywords)). The
+keywords are translated in all languages using the *deeplr* package
+which allows us to translate up to 500,000 characters per month with a
+free DeepL account. The package did not support Persian, Arab, and
+Hebrew so those languages were translated using google translate.
 
 ```{r eval = !file.exists(find_root_file("data", "filtering_keywords.yml", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #--------------------------Filtering relevant web pages------------------------#
@@ -274,6 +400,7 @@ git2rdata::write_vc(
                         criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 }
 ```
+
 ```{r filter-keywords}
 keywords <- git2rdata::read_vc(
   file = "filtering_keywords",
@@ -480,15 +607,31 @@ content_filtered <- read_parquet(
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 ```
 
-Figure \@ref(fig:keyword-frequency) shows how often each of the keywords appear in the web pages.
-We will sum the frequency for each of the keywords to obtain the total number of time *any* of the keywords appear in each of the web pages (see the Figure \@ref(fig:total-keywords) on the left). To correct for the length of a web page, we divide this total by the number of characters in the web page (see the Figure \@ref(fig:total-keywords) on the right). 
+Figure \@ref(fig:keyword-frequency) shows how often each of the keywords
+appear in the web pages. We will sum the frequency for each of the
+keywords to obtain the total number of time *any* of the keywords appear
+in each of the web pages (see the Figure \@ref(fig:total-keywords) on
+the left). To correct for the length of a web page, we divide this total
+by the number of characters in the web page (see the Figure
+\@ref(fig:total-keywords) on the right).
 
-In over 15% of the web pages, any of the keywords appear. These web pages are for sure irrelevant.
-Since we only want to keep web pages that are relevant for our topic of interest, we will only keep web pages where any of the keywords appear at least 5 times and the total keyword frequency, divided by the number of characters is at least 0.00121 (that is the 30% quantile). In total, this reduces out dataset from `r nrow(content)` to `r keep_total` (`r round(100*keep_total/nrow(content), 2)`%) web pages.
+In over 15% of the web pages, any of the keywords appear. These web
+pages are for sure irrelevant. Since we only want to keep web pages that
+are relevant for our topic of interest, we will only keep web pages
+where any of the keywords appear at least 5 times and the total keyword
+frequency, divided by the number of characters is at least 0.00121 (that
+is the 30% quantile). In total, this reduces out dataset from
+`r nrow(content)` to `r keep_total`
+(`r round(100*keep_total/nrow(content), 2)`%) web pages.
 
-Figure \@ref(fig:keep-per-language) shows that relatively many Persian web pages are filtered out.
-Upon further inspection, it was clear that the Persian word for Israel, اسرائيل, could be found in exactly zero web pages.
-Native speakers could tell us that, since Iran does not recognise Israel as a country, they call it "zionist regime",رژیم صهیونیستی , or "occupied Palestine", فلسطین اشغالی in stead. Since "zionist regime" had the most hits, we used that term in stead but it still yielded far less matches than the term Israel got in any other language.
+Figure \@ref(fig:keep-per-language) shows that relatively many Persian
+web pages are filtered out. Upon further inspection, it was clear that
+the Persian word for Israel, اسرائيل, could be found in exactly zero web
+pages. Native speakers could tell us that, since Iran does not recognise
+Israel as a country, they call it "zionist regime",رژیم صهیونیستی , or
+"occupied Palestine", فلسطین اشغالی in stead. Since "zionist regime" had
+the most hits, we used that term in stead but it still yielded far less
+matches than the term Israel got in any other language.
 
 ```{r keep-per-language, fig.cap = "Number of web pages that are filtered out for each of the languages in absolute numbers (left) and in percentages (right)."}
 #plot how many web pages remain after filtering, per language
@@ -513,13 +656,23 @@ combined + plot_layout(guides = "collect")
 
 ## Text pre-processing
 
-The wikipedia page content contains a lot of redundant characters like references to other web pages (in the form of a number between square brackets) and line breaks.
-Special care was taken since numbers in the Persian language are not the commonly used arabic numerals.
+The Wikipedia page content contains a lot of redundant characters like
+references to other web pages (in the form of a number between square
+brackets) and line breaks. Special care was taken since numbers in the
+Persian language are not the commonly used arabic numerals.
 
-Next, the R package *tokenizers* is used to tokenize the cleaned content into sentences (see also the [package documentation](https://cran.r-project.org/web/packages/tokenizers/vignettes/introduction-to-tokenizers.html)).
-Using the *tm* package, we then bring all text to lower case, remove punctuation, remove numbers, remove stopwords.
-We use the R package *stopwords* to filter stopwords from the text since this package contains stopwords in many languages which is a must for our analysis (see also the [package documentation](https://cran.r-project.org/web/packages/stopwords/readme/README.html)).
-Finally, a document-term matrix is generated for each of the languages. These document-term matrices are used in appendix \@ref(wordclouds) to create a word cloud for each of the languages.
+Next, the R package *tokenizers* is used to tokenize the cleaned content
+into sentences (see also the [package
+documentation](https://cran.r-project.org/web/packages/tokenizers/vignettes/introduction-to-tokenizers.html)).
+Using the *tm* package, we then bring all text to lower case, remove
+punctuation, remove numbers, remove stopwords. We use the R package
+*stopwords* to filter stopwords from the text since this package
+contains stopwords in many languages which is a must for our analysis
+(see also the [package
+documentation](https://cran.r-project.org/web/packages/stopwords/readme/README.html)).
+Finally, a document-term matrix is generated for each of the languages.
+These document-term matrices are used in appendix \@ref(wordclouds) to
+create a word cloud for each of the languages.
 
 ```{r warning = FALSE, message = FALSE, eval = !file.exists(find_root_file("data", "dtm.Rdata", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #-----------------------------text pre-processing------------------------------#
@@ -575,6 +728,7 @@ save(dtm, file = find_root_file("data", "dtm.Rdata",
                       criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 }
 ```
+
 ```{r warning = FALSE, message = FALSE, eval = file.exists(find_root_file("data", "dtm.Rdata", criterion = has_file("col_an_data_for_soc_sci.Rproj")))}
 #load dtm locally if it exists
 load(find_root_file("data", "dtm.Rdata",
@@ -583,8 +737,12 @@ load(find_root_file("data", "dtm.Rdata",
 
 ## Sentiment analysis per page
 
-
-\@ref(fig:hist-sentiment) shows the sentiment score for each of the languages. Although the *syuzhet* provides support for sentiment detection in several languages by using the expanded NRC lexicon from Saif Mohammed, languages that use non-Latin character sets are not yet implemented in the current release which can be seen in the histogram since almost all scores are equal to zero in those languages.
+Figure \@ref(fig:hist-sentiment) shows the sentiment score for each of
+the languages. Although the *syuzhet* provides support for sentiment
+detection in several languages by using the expanded NRC lexicon from
+Saif Mohammed, languages that use non-Latin character sets are not yet
+implemented in the current release which can be seen in the histogram
+since almost all scores are equal to zero in those languages.
 
 ```{r cache = TRUE, warning = FALSE, message = FALSE}
 # sentiment analysis for each page (language independent)
@@ -606,9 +764,20 @@ content_filtered %>%
   ylab("Number of documents")
 ```
 
-Nevertheless, we can visualise the sentiment in the Wikipedia pages over time.
-Figure \@ref(fig:sent-date-published) and Figure \@ref(fig:sent-date-modified) show the sentiment in the Wikipedia pages over time, based on the date that the page was first published or last modified respectively.
-
+Nevertheless, we can visualise the sentiment in the Wikipedia pages over
+time. Figure \@ref(fig:sent-date-published) and Figure
+\@ref(fig:sent-date-modified) show the sentiment in the Wikipedia pages
+over time, based on the date that the page was first published or last
+modified respectively. As mentioned earlier, languages with non-latin
+characters like Chinese and Russian do not show any clear sentiment
+scores over time. From these figures, it can be concluded that there is
+a clear difference of sentiment across languages. Languages like Dutch
+and Spanish seem to carry a negative sentiment in articles about Israel
+and Palestine form 2020 onwards. A huge outlier in figure
+\@ref(fig:sent-date-published) is the changing of the sentiment score of
+German after 2015. Figure \@ref(fig:sent-date-modified) highlights the
+start of the Israel-Hamas war on October 7 2023, but there does not seem
+to be a clear change in sentiment for any language.
 
 ```{r sent-date-published, fig.cap="Sentiment over time in different languages, based on the date that the page was first published.", warning = FALSE, message = FALSE}
 # Data
@@ -670,9 +839,24 @@ ggplot(content_date_modified, aes(x = date_modified, y = sentiment_score, color 
 
 ```
 
-We can also visualize the sentiment categories as predicted by the syuzhet package, using the NRC sentiment dictionary. This calculates the presence of eight emotions in the texts. Figure \@ref(fig:nrc-posneg), \@ref(fig:nrc-by-cat), and \@ref(fig:nrc-avg-sent) show the results of this analysis.
+We can also visualize the sentiment categories as predicted by the
+syuzhet package, using the NRC sentiment dictionary. This calculates the
+presence of eight emotions in the texts. Figure \@ref(fig:nrc-posneg),
+\@ref(fig:nrc-by-cat), and \@ref(fig:nrc-avg-sent) show the results of
+this analysis. Figure \@ref(fig:nrc-posneg) shows that English shows
+both the highest mean score for positive and negative sentiment,
+followed by French, German and Dutch. Figure \@ref(fig:nrc-by-cat)
+breaks down sentiment in 7 emotions categories that are part of the
+*syuzhet* package: anticipation, disgust, fear, joy, sadness, surprise
+and trust. Figure \@ref(fig:nrc-avg-sent) compares the average *emotion*
+categories within each language, this allows us to draw interesting
+conclusions. Trust seems to the most common emotional category for all ,
+but this seems to be the only similarity between the languages. The
+'Fear' sentiment seems to be comparatively high for Dutch, English,
+French and German. 'Sadness' seems to be comparetively high for Russian,
+and 'Joy' seems to be high for Hebrew.
 
-```{r nrc-posneg, cache = TRUE, fig.cap = "Not sure how to describe the figure.", warning = FALSE, message = FALSE}
+```{r nrc-posneg, cache = TRUE, fig.cap = "Positive and Negative Sentiment of Langauges.", warning = FALSE, message = FALSE}
 nrc_data <- content_filtered %>%
   mutate(page_content = as.character(page_content)) %>%
   mutate(language = as.factor(language)) %>%
@@ -710,7 +894,7 @@ ggplot(sentiment_pos_neg_convert,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r nrc-by-cat, cache = TRUE, fig.cap = "Not sure how to describe the figure.", warning = FALSE, message = FALSE}
+```{r nrc-by-cat, cache = TRUE, fig.cap = "Sentiment Categories of Languages.", warning = FALSE, message = FALSE}
 # List of sentiment categories
 sentiment_categories <- c("anticipation", "disgust", "fear", "joy", "sadness",
                           "surprise", "trust")
@@ -752,6 +936,32 @@ ggplot(sentiment_summary_long,
 ```
 
 # Discussion
+
+In this analysis, the differences in sentiment in Wikipedia articles on
+the Israel-Palestine conflict were analysed by comparing different
+languages. After web-scraping, filtering and pre-processing the text, a
+sentiment analysis was run on the text. For most languages, the
+Wikipedia articles seemed to reproduce an average neutral sentiment
+score. However, German and French seems to skew a bit to the negative
+sentiment side. When looking at the sentiment score over time, German
+seems to be the main outlier with a very negative score in 2012, which
+slowly became positive the years following. There was no clear effect in
+any language for sentiment after the start of the Israel-Hamas was in
+October 2023. When looking at emotional categories within sentiment,
+German seems to have a high mean sentiment score for 'Fear'; Hebrew for
+'Joy' and Russian for 'Sadness'. However, it is important to add that
+these results have to be combined with further research and manual
+coding for it to be reliable.
+
+One of the limitations to our research is that languages that use
+non-Latin alphabets were not included in the release of the *syuzhet*
+package. This has not allowed us to analyse these languages or interpret
+their results correctly. Another limitation of the analysis is that we
+do not speak all the languages used in this dataset, this has resulted
+in us not being able to pre-process the webscraped data to the best of
+its abilities. However, to conclude, as far as we are aware, this is a
+first attempt at compiling a big exploratory study comparing sentiment
+across languages on Wikipedia using NLP.
 
 \clearpage
 
@@ -800,7 +1010,11 @@ if (!file.exists(find_root_file("wordcloud_Dutch.pdf",
 }
 ```
 
-In this section, we present word clouds based on the document-term matrices for each of the languages. To avoid over-cluttering the wordcloud, we only include the `r (1 - included_term_frequency)*100`% of terms that appear most often in that language, with a maximum of `r max_terms`.
+In this section, we present word clouds based on the document-term
+matrices for each of the languages. To avoid over-cluttering the
+wordcloud, we only include the `r (1 - included_term_frequency)*100`% of
+terms that appear most often in that language, with a maximum of
+`r max_terms`.
 
 ```{r wordcloud-eng, fig.cap= "Wordcloud for the English Wikipedia pages.", warning = FALSE, message = FALSE}
 knitr::include_graphics(
@@ -872,8 +1086,6 @@ knitr::include_graphics(
                  criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 
 ```
-
-
 
 ## All code for this report
 
