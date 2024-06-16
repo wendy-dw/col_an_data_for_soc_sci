@@ -757,7 +757,7 @@ are not yet implemented in the current release which can be seen in the
 histogram since almost all scores are equal to zero in those languages.
 
 ```{r cache = TRUE, warning = FALSE, message = FALSE}
-# sentiment analysis for each page (language independent)
+#----------sentiment analysis for each page (language independent)-------------#
 content_filtered <- content_filtered %>%
   mutate(
     sentiment_score = get_sentiment(page_content, method = "syuzhet")
@@ -869,6 +869,7 @@ German. 'Sadness' seems to be comparatively high for Russian, and 'Joy'
 seems to be high for Hebrew.
 
 ```{r nrc-posneg, cache = TRUE, fig.cap = "Positive and Negative Sentiment of Langauges.", warning = FALSE, message = FALSE}
+#------------------------------NRC sentiment analysis--------------------------#
 nrc_data <- content_filtered %>%
   mutate(page_content = as.character(page_content)) %>%
   mutate(language = as.factor(language)) %>%
@@ -985,6 +986,7 @@ Israeli–Palestinian conflict, whereas cluster 2 and 3 are more about the
 Israeli–Palestinian conflict in general.
 
 ```{r embedding-analysis-english, cache = TRUE, fig.cap = "Clustering/PCA on the embeddings.", warning = FALSE, message = FALSE}
+#---------------------------Word embeddings and PCA----------------------------#
 filtered_data <- content_filtered %>%
   filter(language == "English")
 # Define the function to get the top 10 keywords used for the embedding
@@ -1004,7 +1006,8 @@ keyWords <- function(text) {
   return(top_keywords_freq)
 }
 
-# Define the function to calculate the average embedding for each article based on 10 keywords
+# Define the function to calculate the average embedding for each article based
+# on 10 keywords
 aveEmbedding <- function(keywords) {
   E <- textEmbed(keywords)
   return(colMeans(E$texts$texts))
@@ -1025,7 +1028,8 @@ aveEmbedding <- function(keywords) {
 # df <- t(df)
 # write.csv(df, "embedding_data.csv", row.names = FALSE)
 
-# The codes to generate embeddings are very computationally heavy, so we read directly what's been generated before
+# The codes to generate embeddings are very computationally heavy, so we read
+# directly what's been generated before
 df <- read.csv(find_root_file("data", "embedding_data.csv",
                       criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 
@@ -1153,6 +1157,7 @@ embeddings from the keywords.
 ## Wordclouds
 
 ```{r}
+#-----------------------------WORD CLOUDS--------------------------------------#
 included_term_frequency <- 0.95
 max_terms <- 500
 create_wordcloud <- function(lang = "English",
