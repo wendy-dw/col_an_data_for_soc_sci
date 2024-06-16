@@ -29,21 +29,20 @@ library(patchwork)       #combining ggplot figures
 library(htmlwidgets)     #saving wordcloud
 library(webshot)         #saving wordcloud
 library(tidytext)
+
 #packages for web scraping
 library(webdriver)
 library(rvest)
-library(furrr)           #process in parallel
-library(ggplot2)  
-library(plotly)
+library(furrr)           #process in parallel 
 
 #packages for languages
 library(deeplr)          #for easy translations from R
 library(stopwords)       #multi-lingual database with stopwords
 library(tokenizers)      #for tokenization
 library(tm)              #text mining in R
-library(wordcloud2)       #to create a word cloud
+library(wordcloud2)      #to create a word cloud
 library(syuzhet)         #for multi-lingual sentiment analysis
-library(text)   # for word embeddings 
+library(text)            #for word embeddings 
 
 #load custom functions
 source(find_root_file("src", "final report", "helperfunctions.R",
@@ -150,7 +149,7 @@ based their research on Wikipedia articles.
 
 Wikipedia is the most widely used encyclopedia in collaborative
 knowledge building, it contains more than 60 million articles and has
-more than 300 languages (@wikipedia-list). The encyclopedia is committed
+more than 300 languages [@wikipedia-list]. The encyclopedia is committed
 to what it calls a “Neutral Point of View” (NPOV), which is defined as
 representing proportionately, fairly, and as far as possible without
 bias. The automatic identification of POV is of high potential for
@@ -164,7 +163,7 @@ webpages allow opinions, as long as they come for reliable authors
 
 # Methodology
 
-The methodology to answer the research question are as follows:
+The methodology to answer the research questions is as follows:
 
 1.  Web scraping and web crawling: The automated download of HTML pages
     is called **Crawling**. The extraction of the textual data and/or
@@ -187,13 +186,16 @@ The methodology to answer the research question are as follows:
 
 3.  A detailed look at the sentiments over time in the different
     languages.
-
-Besides the above methodologies for investigating our main reseearch
+    
+Besides the above methodologies for investigating our main research
 question, we also used state-of-the-art natural language processing
 techniques such as word embeddings, unsupervised machine learning
 methods such as K means clustering and PCA analysis in our additional
 experiment - the purpose of which was to cluster the articles based on
 their similarities.
+
+All code is available in the appendix of this report and all code and data can 
+also be freely accessed through [\underline{this github repository}](https://github.com/raiisac/col_an_data_for_soc_sci).
 
 # Results
 
@@ -945,6 +947,8 @@ ggplot(sentiment_summary_long,
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+\clearpage
+
 ## Clustering based on word embeddings and PCA
 
 Another experimentation we did was to cluster the articles based on
@@ -971,7 +975,7 @@ clusters, we also performed PCA, such that the PCA scores for each page
 as well as the cluster each page belongs to can be shown in two
 dimensions, as in Figure \@ref(fig:embedding-analysis-english). To see
 how the different clusters may be related to different types of
-contents, we then extract top 10 keywords and their frequencies for each
+contents, we then extract the top 10 keywords and their frequencies for each
 cluster, and visualize this in Figure
 \@ref(fig:visualize-top-keywords-cluster). As we see, cluster 1 contains
 high-frequency words such as "gaza" and "war", which are missing from
@@ -981,10 +985,8 @@ Israeli–Palestinian conflict, whereas cluster 2 and 3 are more about the
 Israeli–Palestinian conflict in general.
 
 ```{r embedding-analysis-english, cache = TRUE, fig.cap = "Clustering/PCA on the embeddings.", warning = FALSE, message = FALSE}
-
-library(ggplot2)  # For visualization (optional)
-library(text)
-
+filtered_data <- content_filtered %>%
+  filter(language == "English")
 # Define the function to get the top 10 keywords used for the embedding
 keyWords <- function(text) {
   corpus <- Corpus(VectorSource(text))
@@ -1024,7 +1026,8 @@ aveEmbedding <- function(keywords) {
 # write.csv(df, "embedding_data.csv", row.names = FALSE)
 
 # The codes to generate embeddings are very computationally heavy, so we read directly what's been generated before
-df <- read.csv('embedding_data.csv')
+df <- read.csv(find_root_file("data", "embedding_data.csv",
+                      criterion = has_file("col_an_data_for_soc_sci.Rproj")))
 
 # Perform k-means clustering
 num_clusters <- 3  
