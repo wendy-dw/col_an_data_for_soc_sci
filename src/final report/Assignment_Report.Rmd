@@ -1091,6 +1091,8 @@ its abilities. However, as far as we are aware, this is a
 first attempt at compiling a big exploratory study comparing sentiment
 across languages on Wikipedia using NLP.
 
+In terms of the clustering on the articles, we saw that there is some limitation within our current analysis, as most of the keywords in different clusters overlap with one another. For future studies in this direction, one may play around with parameters such as different number of keywords to use for averaging word embeddings in each artile, or different number of clusters. One may also explore alternative approaches for a richer semantic representation of the article, other than just simply averaging the word embeddings from the keywords.
+
 \clearpage
 
 \appendix
